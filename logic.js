@@ -30,7 +30,7 @@ async function update() {
   try {
     if (!navigator.onLine) throw "offline";
 
-    let o = (await (await fetch("https://api.gold-api.com/price/XAU?t=" + Date.now())).json()).price;
+    let o = (await (await fetch("https://api.gold-api.com/price/XAU", { cache: "no-store" })).json()).price;
     updateDailyBaseline(o);
 
     const daily = calculateDailyChange(o);
@@ -78,6 +78,7 @@ function toggleCalc(){ el("calc").classList.toggle("hidden"); }
 function c(v){ calcInput.value+=v; }
 function calc(){ try{ calcInput.value=eval(calcInput.value);}catch{ calcInput.value="Error"; } }
 function clr(){ calcInput.value=""; }
+
 
 
 
