@@ -6,10 +6,12 @@ body {
 }
 
 .container {
-  max-width:520px;
-  margin:auto;
-  padding:10px;
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+  padding: 10px;
 }
+
 
 header { text-align:center; }
 
@@ -75,4 +77,5 @@ input {
 .hidden { display:none; }
 
 hr { border-color:#333; }
+
 
