@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-  max-width:420px;
+  max-width:520px;
   margin:auto;
   padding:10px;
 }
@@ -75,3 +75,4 @@ input {
 .hidden { display:none; }
 
 hr { border-color:#333; }
+
