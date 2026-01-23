@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نرخی زێر</title>
+
+<a href="http://goldprice.org/live-gold-price.html" style="display:none">Live Gold Price</a>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <h1>نرخی زێر</h1>
+  <div id="status" class="status offline">🔴 نیشانە نیە</div>
+</header>
+
+<section>
+  <div class="row">
+    <span class="label">یەک ئۆنسەی زێر 24K</span>
+    <span class="value" id="ounce">$0</span>
+    <small id="chgOunce"></small>
+  </div>
+
+  <div class="row">
+    <span class="label">یەک مسقال زێر نێودەوڵەتی 21K</span>
+    <span class="value" id="global21">$0</span>
+    <small id="chg21"></small>
+  </div>
+
+  <div class="row">
+    <span class="label">یەک مسقال زێر لە بازاڕ 21K</span>
+    <span class="value" id="market21">$0</span>
+    <small id="chgMarket"></small>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <div class="row">
+    <span class="label">نرخی فەرمی بانکی ناوەندی CBI</span>
+    <span class="value">1320 IQD</span>
+  </div>
+
+  <div class="row">
+    <span class="label">نرخی نێودەوڵەتی یەک مسقال زێر بە دینار 21K</span>
+    <span class="value" id="cbi21">0 IQD</span>
+    <small id="chgCbi"></small>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <div class="row">
+    <span class="label">نرخی دۆلار (بازار)</span>
+    <input id="usd" type="number" inputmode="decimal" placeholder="IQD">
+  </div>
+
+  <div class="row">
+    <span class="label">نرخی نێودەوڵەتی یەک مسقال زێر بەدینار 21K</span>
+    <span class="value" id="iqdNoMargin">0 IQD</span>
+    <small id="chgIQD"></small>
+  </div>
+
+  <div class="row">
+    <span class="label">نرخی یەک مسقال زێر بەدینار لە بازاڕ 21K</span>
+    <span class="value" id="iqdMargin">0 IQD</span>
+    <small id="chgIQDM"></small>
+  </div>
+</section>
+
+<section>
+  <label>رێژەی باج: <span id="mval">1.2%</span></label>
+  <input type="range" id="margin" min="0" max="5" step="0.1" value="1.2">
+</section>
+
+<button class="calc-btn" onclick="toggleCalc()"> Calculator</button>
+
+<section id="calc" class="hidden">
+  <input id="calcInput" readonly class="calc-input">
+  <div class="keys">
+    <button onclick="c('3')">3</button>
+    <button onclick="c('2')">2</button>
+    <button onclick="c('1')">1</button>
+    <button onclick="c('+')">+</button>
+
+    <button onclick="c('6')">6</button>
+    <button onclick="c('5')">5</button>
+    <button onclick="c('4')">4</button>
+    <button onclick="c('-')">−</button>
+
+    <button onclick="c('9')">9</button>
+    <button onclick="c('8')">8</button>
+    <button onclick="c('7')">7</button>
+    <button onclick="c('*')">×</button>
+
+    <button onclick="c('0')">0</button>
+    <button onclick="calc()">=</button>
+    <button onclick="clr()">C</button>
+    <button onclick="c('/')">÷</button>
+  </div>
+</section>
+
+<footer>
+  <small id="time"></small>
+</footer>
+
+</div>
+<script src="dailyChange.js"></script>
+<script src="logic.js"></script>
+</body>
+</html>
