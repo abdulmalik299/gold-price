@@ -1,9 +1,18 @@
-let last = Number(sessionStorage.getItem("lastPrice")) || 0;
+function getNYDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+let nyDateStored = localStorage.getItem("nyDate");
+let nyBaseline = Number(localStorage.getItem("nyBaseline")) || 0;
+let last = 0;
 
 const el = id => document.getElementById(id);
 
 function setChange(target, pct, diff) {
-  if (!target) return;
   if (diff > 0) {
     target.textContent = `▲ ${pct.toFixed(2)}%`;
     target.style.color = "#0f0";
@@ -30,12 +39,18 @@ async function update() {
   try {
     if (!navigator.onLine) throw "offline";
 
-    let o = (await (await fetch("https://api.gold-api.com/price/XAU", { cache: "no-store" })).json()).price;
-    updateDailyBaseline(o);
+    let o = (await (await fetch("https://api.gold-api.com/price/XAU",{cache:"no-store"})).json()).price;
+    let currentNYDate = getNYDate();
 
-    const daily = calculateDailyChange(o);
-    let diff = daily.percent; // for direction only
-    let pct = daily.percent;
+    if (nyDateStored !== currentNYDate || !nyBaseline) {
+      nyDateStored = currentNYDate;
+      nyBaseline = o;
+      localStorage.setItem("nyDate", nyDateStored);
+      localStorage.setItem("nyBaseline", nyBaseline);
+    }
+
+    let diff = o - nyBaseline;
+    let pct = nyBaseline ? (diff / nyBaseline) * 100 : 0;
 
 
     let g21 = (o / 31.1) * 0.875 * 5;
@@ -57,7 +72,6 @@ async function update() {
     el("time").textContent = "نوێکردنەوە: " + new Date().toLocaleTimeString();
 
     updateConnection(false);
-    sessionStorage.setItem("lastPrice", o);
     last = o;
 
   } catch {
@@ -67,18 +81,11 @@ async function update() {
 
 el("margin").oninput = () => el("mval").textContent = el("margin").value + "%";
 
-document.addEventListener("DOMContentLoaded", () => {
-  setInterval(update, 1000);
-  update();
-});
-
+setInterval(update,1000);
+update();
 
 /* Calculator */
 function toggleCalc(){ el("calc").classList.toggle("hidden"); }
 function c(v){ calcInput.value+=v; }
 function calc(){ try{ calcInput.value=eval(calcInput.value);}catch{ calcInput.value="Error"; } }
 function clr(){ calcInput.value=""; }
-
-
-
-
