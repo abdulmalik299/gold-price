@@ -3,6 +3,7 @@ let last = Number(sessionStorage.getItem("lastPrice")) || 0;
 const el = id => document.getElementById(id);
 
 function setChange(target, pct, diff) {
+  if (!target) return;
   if (diff > 0) {
     target.textContent = `▲ ${pct.toFixed(2)}%`;
     target.style.color = "#0f0";
@@ -66,12 +67,16 @@ async function update() {
 
 el("margin").oninput = () => el("mval").textContent = el("margin").value + "%";
 
-setInterval(update,1000);
-update();
+document.addEventListener("DOMContentLoaded", () => {
+  setInterval(update, 1000);
+  update();
+});
+
 
 /* Calculator */
 function toggleCalc(){ el("calc").classList.toggle("hidden"); }
 function c(v){ calcInput.value+=v; }
 function calc(){ try{ calcInput.value=eval(calcInput.value);}catch{ calcInput.value="Error"; } }
 function clr(){ calcInput.value=""; }
+
 
