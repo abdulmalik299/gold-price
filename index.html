@@ -5,112 +5,184 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>نرخی زێر</title>
 
-<a href="http://goldprice.org/live-gold-price.html" style="display:none">Live Gold Price</a>
-
+<link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="style.css">
+
+<a href="http://goldprice.org/live-gold-price.html" style="display:none">Live Gold Price</a>
 </head>
 
 <body>
-<div class="container">
+<div class="container vip">
 
-<header>
-  <h1>نرخی زێر</h1>
+<header class="vip-header">
+  <h1> نرخی زێر </h1>
+  <p class="subtitle">سیستەمی زێر: ڕاستەوخۆ + پێشبینی + بازاڕ</p>
   <div id="status" class="status offline">🔴 نیشانە نیە</div>
 </header>
 
-<section>
+<!-- LIVE PRICES -->
+<section class="card">
+  <h3 class="section-title"> نرخی ڕاستەوخۆ </h3>
+
   <div class="row">
-    <span class="label">یەک ئۆنسەی زێر 24K</span>
+    <div class="label"> ئۆنسەیەک زێر <span class="hint">جیهانی</span></div>
     <span class="value" id="ounce">$0</span>
     <small id="chgOunce"></small>
   </div>
 
   <div class="row">
-    <span class="label">یەک مسقال زێر نێودەوڵەتی 21K</span>
+    <div class="label">یەک مسقال زێڕ 21K<span class="hint">جیهانی</span></div>
     <span class="value" id="global21">$0</span>
     <small id="chg21"></small>
   </div>
 
   <div class="row">
-    <span class="label">یەک مسقال زێر لە بازاڕ 21K</span>
-    <span class="value" id="market21">$0</span>
+    <div class="label">یەک مسقال زێڕ 21K<span class="hint">بازاڕ</span></div>
+    <span class="value gold" id="market21">$0</span>
     <small id="chgMarket"></small>
   </div>
 </section>
 
-<hr>
+<!-- USD -->
+<section class="card">
+  <h3 class="section-title"> دۆلار ← دینار</h3>
 
-<section>
   <div class="row">
-    <span class="label">نرخی فەرمی بانکی ناوەندی CBI</span>
-    <span class="value">1320 IQD</span>
+    <div class="label">نرخی دۆلار لە بازار </div>
+    <input id="usd" type="text" inputmode="numeric" placeholder="IQD">
   </div>
 
   <div class="row">
-    <span class="label">نرخی نێودەوڵەتی یەک مسقال زێر بە دینار 21K</span>
-    <span class="value" id="cbi21">0 IQD</span>
-    <small id="chgCbi"></small>
-  </div>
-</section>
-
-<hr>
-
-<section>
-  <div class="row">
-    <span class="label">نرخی دۆلار (بازار)</span>
-    <input id="usd" type="number" inputmode="decimal" placeholder="IQD">
-  </div>
-
-  <div class="row">
-    <span class="label">نرخی نێودەوڵەتی یەک مسقال زێر بەدینار 21K</span>
+    <div class="label"> یەک مسقال زێڕ 21K <span class="hint">بێ باج</span></div>
     <span class="value" id="iqdNoMargin">0 IQD</span>
     <small id="chgIQD"></small>
   </div>
 
   <div class="row">
-    <span class="label">نرخی یەک مسقال زێر بەدینار لە بازاڕ 21K</span>
-    <span class="value" id="iqdMargin">0 IQD</span>
+    <div class="label"> یەک مسقال زێڕ 21K <span class="hint">لەگەڵ باج</span></div>
+    <span class="value gold" id="iqdMargin">0 IQD</span>
     <small id="chgIQDM"></small>
   </div>
 </section>
 
-<section>
-  <label>رێژەی باج: <span id="mval">1.2%</span></label>
+<section class="card slider-section">
+  <label>باجی بنەڕەتی: <span id="mval">1.2%</span></label>
   <input type="range" id="margin" min="0" max="5" step="0.1" value="1.2">
+  <small class="trust">رێژەی خەملێنراو</small>
+</section>
+
+<!-- EXPECTATION SIMULATOR -->
+<section class="card vip-sim">
+  <h3 class="section-title"> پێشبینی نرخی زێر</h3>
+
+  <div class="row">
+    <div class="label">پێشبینی نرخی ئۆنسە ($)</div>
+    <div class="input-with-dollar">
+    <input id="simOunce" type="text" inputmode="numeric" placeholder="0">
+    <span class="dollar">$</span>
+</div>
+
+  </div>
+
+  <div class="row">
+    <div class="label">نرخی یەک دۆلار</div>
+    <input id="simUsd" type="text" inputmode="numeric" placeholder="0">
+  </div>
+
+  <div class="row">
+    <div class="label">باج (%)</div>
+    <input id="simMargin" type="number" step="0.1" value="1.2">
+  </div>
+
+  <button class="calc-btn vip-btn" onclick="runSimulation()">هەژمارکدن</button>
+
+  <div class="sim-result">
+    <div>21K USD: <span id="sim21usd">$0</span></div>
+    <div>21K IQD: <span id="sim21iqd">0 IQD</span></div>
+    <div>جیاوازی: <span id="simDiff">0</span></div>
+  </div>
+</section>
+
+<!-- HYBRID MARKET INPUT -->
+<section class="card hybrid">
+  <h3 class="section-title"> زانینی رێژەی باج </h3>
+
+  <p class="hint">ئەگەر لە بازاڕ نرخێکت بینی، بینووسە ↓</p>
+
+  <div class="row">
+    <div class="label">نرخی فرۆشگا (21K IQD)</div>
+    <input id="shopPrice" type="text" inputmode="numeric" placeholder="0">
+  </div>
+
+  <button class="calc-btn" onclick="submitMarketPrice()"> زیادکردن</button>
+
+  <div class="market-info">
+    <div>باجی ڕاستی: <span id="realMargin">–</span></div>
+    <div>دڵنیایی: <span id="confidence">0%</span></div>
+    <div class="trust">🟢 User-Reported / Offline Stored</div>
+  </div>
+
+  <p class="sim-note">📌 زانیارییەکان لە مۆبایلەکەت هەڵدەگیرێن (offline)</p>
 </section>
 
 <button class="calc-btn" onclick="toggleCalc()"> Calculator</button>
 
-<section id="calc" class="hidden">
-  <input id="calcInput" readonly class="calc-input">
+<div id="calc" class="calculator hidden">
+
+  <div class="calc-screen">
+    <div id="calcExpression" class="calc-expression"></div>
+    <div id="calcTyping" class="calc-typing"></div>
+    <div id="calcResult" class="calc-result" onclick="copyResult()"></div>
+    
+    <div class="calc-screen-actions">
+     <div class="calc-history hidden" id="calcHistory">
+  <button class="clear-history-btn" onclick="clearHistory()">Clear history</button>
+</div>
+
+      <button class="history-btn" onclick="openHistory()">⏱</button>
+      <button class="delete-btn" onclick="del()">⌫</button>
+    </div>
+  </div>
+
   <div class="keys">
-    <button onclick="c('3')">3</button>
-    <button onclick="c('2')">2</button>
-    <button onclick="c('1')">1</button>
-    <button onclick="c('+')">+</button>
+    <button onclick="c('%')">%</button>
+    <button onclick="c('(')">(</button>
+    <button onclick="c(')')">)</button>
+    <button onclick="clr()">C</button>
 
-    <button onclick="c('6')">6</button>
-    <button onclick="c('5')">5</button>
-    <button onclick="c('4')">4</button>
-    <button onclick="c('-')">−</button>
-
-    <button onclick="c('9')">9</button>
-    <button onclick="c('8')">8</button>
     <button onclick="c('7')">7</button>
+    <button onclick="c('8')">8</button>
+    <button onclick="c('9')">9</button>
+    <button onclick="c('/')">÷</button>
+
+    <button onclick="c('4')">4</button>
+    <button onclick="c('5')">5</button>
+    <button onclick="c('6')">6</button>
     <button onclick="c('*')">×</button>
 
+    <button onclick="c('1')">1</button>
+    <button onclick="c('2')">2</button>
+    <button onclick="c('3')">3</button>
+    <button onclick="c('-')">−</button>
+
+    <button onclick="toggleSign()">±</button>
     <button onclick="c('0')">0</button>
-    <button onclick="calc()">=</button>
-    <button onclick="clr()">C</button>
-    <button onclick="c('/')">÷</button>
+    <button onclick="c('.')">.</button>
+    <button onclick="c('+')">+</button>
+
+    <button class="equal-btn" onclick="calc()">=</button>
   </div>
+</div>
+
 </section>
 
-<footer>
-  <small id="time"></small>
+<footer class="vip-footer">
+  <small id="time"></small><br>
+  <small>---</small>
 </footer>
 
 </div>
+
 <script src="dailyChange.js"></script>
 <script src="logic.js"></script>
 </body>
