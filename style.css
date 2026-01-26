@@ -1,81 +1,216 @@
 body {
-  background:#000;
-  color:gold;
-  font-family:system-ui;
-  margin:0;
+  background: radial-gradient(circle at top,#111,#000);
+  color: gold;
+  font-family: system-ui;
+  margin: 0;
 }
 
-.container {
-  width: 100%;
-  max-width: 420px;
-  margin: auto;
-  padding: 10px;
+.container { max-width:420px; margin:auto; padding:12px; }
+
+.vip-header { text-align:center; }
+
+.subtitle { 
+  font-size:12px; 
+  opacity:.8; }
+.card {
+  background: linear-gradient(180deg,#111,#050505);
+  border:1px solid #333;
+  border-radius:14px;
+  padding:12px;
+  margin-top:12px;
+  margin-bottom:1px;
+  box-shadow:0 0 14px rgba(212,175,55,.08);
 }
 
+.section-title { font-size:14px; margin-bottom:8px; }
 
-header { text-align:center; }
+.row { display:flex; justify-content:space-between; margin:8px 0; }
 
-.row {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin:8px 0;
-}
+.label { font-size:13px; }
 
-.label { flex:1; text-align:right; }
-.value { font-weight:bold; text-align:left; }
+.hint { display:block; font-size:10px; color:#777; }
 
-small { margin-right:6px; }
+.value { font-weight:bold; }
+
+.value.gold { color:#ffd700; }
 
 input {
-  background:#111;
+  background:#000;
   color:gold;
-  border:1px solid gold;
-  width:120px;
-  text-align:left;
+  border:1px solid #555;
+  border-radius:12px;
+  padding:6px;
+  width:130px;
 }
 
-#margin { direction:ltr; }
-
-.status { margin-bottom:10px; }
-.online { color:#0f0; }
-.offline { color:#f00; }
+.slider-section input { width:100%; }
 
 .calc-btn {
   width:100%;
-  padding:10px;
-  font-size:16px;
-  background:gold;
-  color:black;
+  padding:12px;
   border:none;
-  margin-top:10px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#d4af37,#a8892c);
+  font-weight:bold;
+  margin-top:8px;
 }
 
-.calc-input {
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  text-align:left;
-  box-sizing:border-box;
-  margin-bottom:8px;
+.vip-btn { margin-top:12px; }
+
+.trust {
+  font-size:11px;
+  opacity:.8;
 }
+
+.sim-result { font-size:13px; margin-top:8px; }
+
+.sim-note { font-size:11px; opacity:.7; }
+
+.market-info { margin-top:8px; font-size:12px; }
 
 .keys {
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:6px;
+  gap:8px;
 }
 
 .keys button {
-  height:45px;
+  height:46px;
   background:#111;
+  border:1px solid #444;
+  border-radius:12px;
   color:gold;
-  border:1px solid gold;
-  font-size:16px;
+}
+.keys {
+  direction: rtl;
+}
+
+.keys button {
+  direction: ltr;
+}
+
+.equal-btn {
+  background: gold;
+  color: black;
+  height: 46px;
+}
+
+.clear-btn {
+  grid-column:span 4;
+  background:#300;
+  color:#f55;
+}
+.calc-screen {
+  padding: 10px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.calc-expression {
+  font-size: 14px;
+  opacity: 0.6;
+  text-align: right;
+  word-break: break-all;
+}
+
+.calc-typing {
+  font-size: 18px;
+  text-align: right;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.calc-result {
+  font-size: 28px;
+  text-align: right;
+  margin-top: 6px;
+}
+
+.calc-screen-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  flex-direction: row-reverse; /* ✅ add this */
+}
+
+.calc-screen-actions button {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: inherit;
+}
+.calc-screen-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.history-btn,
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 18px;
+}
+.calc-history {
+  max-height: 160px;
+  overflow-y: auto;
+  background: #0e0e0e;
+  border-radius: 10px;
+  margin-top: 8px;
+  padding: 6px;
+  font-size: 13px;
+}
+
+.calc-history div {
+  padding: 6px;
+  border-bottom: 1px solid #222;
+  cursor: pointer;
+}
+
+.calc-history div:last-child {
+  border-bottom: none;
+}
+
+.calc-history div:hover {
+  background: #181818;
+}
+.clear-history-btn {
+  width: 100%;
+  background: #1a1a1a;
+  color: #aaa;
+  border: none;
+  padding: 6px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.clear-history-btn:hover {
+  background: #222;
+  color: #fff;
 }
 
 .hidden { display:none; }
 
-hr { border-color:#333; }
+.vip-footer { text-align:center; font-size:11px; opacity:.7; }
+.input-with-dollar {
+  position: relative;
+}
 
+.input-with-dollar input {
+  padding-right: 28px;
+}
+
+.input-with-dollar .dollar {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: gold;
+  pointer-events: none;
+  font-size: 14px;
+}
 
