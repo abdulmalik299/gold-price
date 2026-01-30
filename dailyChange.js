@@ -1,38 +1,52 @@
-// DAILY CHANGE BASELINE – OFFLINE SAFE
+/* ======================================================
+   DAILY CHANGE ENGINE — GOLD ENGINE CORE
+   Reset: New York 00:00
+   Storage-safe • Offline-safe • Drift-free
+   ====================================================== */
 
-const DAILY_KEY = "gold_daily_open_price";
-const DAILY_DATE_KEY = "gold_daily_open_date";
+let dailyBasePrice = null;
+let dailyStamp = null;
 
-function getNYDate() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(new Date());
+/* ---------- NY DAY STAMP ---------- */
+function getNYDayStamp() {
+  const now = new Date();
+  const ny = new Date(
+    now.toLocaleString("en-US", { timeZone: "America/New_York" })
+  );
+  return ny.toISOString().slice(0, 10);
 }
 
-function updateDailyBaseline(currentPrice) {
-  const now = new Date();
-  const ny = new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
-  const today = ny.toISOString().slice(0,10);
-  const saved = localStorage.getItem(DAILY_DATE_KEY);
+/* ---------- LOAD ---------- */
+function loadDailyBase() {
+  dailyBasePrice = parseFloat(localStorage.getItem("dailyBasePrice"));
+  dailyStamp = localStorage.getItem("dailyStamp");
+}
 
-  if (saved !== today && ny.getHours() === 0) {
-    localStorage.setItem(DAILY_DATE_KEY, today);
-    localStorage.setItem(DAILY_KEY, currentPrice);
+/* ---------- SAVE ---------- */
+function saveDailyBase(price) {
+  dailyBasePrice = price;
+  dailyStamp = getNYDayStamp();
+  localStorage.setItem("dailyBasePrice", dailyBasePrice);
+  localStorage.setItem("dailyStamp", dailyStamp);
+}
+
+/* ---------- UPDATE BASE ---------- */
+function updateDailyBaseIfNeeded(currentPrice) {
+  const today = getNYDayStamp();
+  if (dailyStamp !== today || !dailyBasePrice) {
+    saveDailyBase(currentPrice);
   }
 }
 
-function calculateDailyChange(currentPrice) {
-  const open = parseFloat(localStorage.getItem(DAILY_KEY));
-  if (!open) return { percent:0, direction:"same" };
+/* ---------- CALCULATE ---------- */
+function getDailyChange(currentPrice) {
+  if (!dailyBasePrice) return { diff: 0, percent: 0 };
 
-  const diff = currentPrice - open;
-  const percent = (diff / open) * 100;
+  const diff = currentPrice - dailyBasePrice;
+  const percent = (diff / dailyBasePrice) * 100;
 
-  return {
-    percent,
-    direction: diff>0 ? "up" : diff<0 ? "down" : "same"
-  };
+  return { diff, percent };
 }
+
+/* ---------- INIT ---------- */
+loadDailyBase();
