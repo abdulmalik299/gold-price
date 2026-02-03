@@ -31,15 +31,16 @@ export default function App() {
     try {
       const p = await fetchLiveOuncePrice()
       setLive((s) => {
-        // Only set lastPriceUpdateAt when number changed.
-        const changed = s.ounceUsd == null ? true : p !== s.ounceUsd
-        const next: LiveState = {
-          ounceUsd: p,
-          prevOunceUsd: s.ounceUsd,
-          lastPriceUpdateAt: changed ? Date.now() : s.lastPriceUpdateAt,
-        }
-        return next
-      })
+         const changed = s.ounceUsd == null ? true : p !== s.ounceUsd
+
+         return {
+           ounceUsd: p,
+         // ⬇️ only update previous price WHEN the price actually changes
+           prevOunceUsd: changed ? s.ounceUsd : s.prevOunceUsd,
+           lastPriceUpdateAt: changed ? Date.now() : s.lastPriceUpdateAt,
+         }
+       })
+
     } catch {
       // keep existing
     }
