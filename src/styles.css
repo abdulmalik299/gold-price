@@ -190,6 +190,46 @@ body{
 .chgUp{ color: var(--up); }
 .chgDown{ color: var(--down); }
 .chgFlat{ color: rgba(255,255,255,0.55); }
+/* When the card pulses, tint the glow based on direction */
+.liveOunce.chgUp.pricePulse {
+  animation:
+    pricePulse 650ms ease-out,
+    goldGlowFlashUp 650ms ease-out;
+}
+
+.liveOunce.chgDown.pricePulse {
+  animation:
+    pricePulse 650ms ease-out,
+    goldGlowFlashDown 650ms ease-out;
+}
+
+/* UP: gold + slight green */
+@keyframes goldGlowFlashUp {
+  0% { box-shadow: var(--shadow); filter: brightness(1); }
+  20% {
+    box-shadow:
+      0 0 0 1px rgba(247,215,122,0.35),
+      0 16px 70px rgba(247,215,122,0.16),
+      0 14px 60px rgba(74,232,157,0.12),
+      var(--shadow);
+    filter: brightness(1.06);
+  }
+  100% { box-shadow: var(--shadow); filter: brightness(1); }
+}
+
+/* DOWN: gold + slight red */
+@keyframes goldGlowFlashDown {
+  0% { box-shadow: var(--shadow); filter: brightness(1); }
+  20% {
+    box-shadow:
+      0 0 0 1px rgba(247,215,122,0.30),
+      0 16px 70px rgba(247,215,122,0.14),
+      0 14px 60px rgba(255,82,122,0.12),
+      var(--shadow);
+    filter: brightness(1.05);
+  }
+  100% { box-shadow: var(--shadow); filter: brightness(1); }
+}
 
 .mutedTiny{ color: var(--muted2); font-size: 12px; margin-top: 10px; }
 b{ color: rgba(255,255,255,0.92); }
