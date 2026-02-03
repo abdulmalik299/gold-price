@@ -22,23 +22,41 @@ export function formatWithCommas(n: number, decimals = 2): string {
   return new Intl.NumberFormat('en-US', opts).format(n)
 }
 
-export function formatMoney(n: number, currency: 'USD' | 'IQD', decimals?: number): string {
+export function formatMoney(
+  n: number | null,
+  currency: 'USD' | 'IQD',
+  decimals?: number
+): string {
+  if (n == null || !Number.isFinite(n)) return '—'
+
   if (currency === 'IQD') {
-    // IQD is typically shown with 0 decimals, but we allow override.
     const d = decimals ?? 0
     return `${formatWithCommas(n, d)} IQD`
   }
+
   const d = decimals ?? 2
   return `$${formatWithCommas(n, d)}`
 }
 
-export function formatPercent(p: number): string {
+/**
+ * Percent formatter that safely handles null / undefined
+ */
+export function formatPercent(p: number | null): string {
+  if (p == null || !Number.isFinite(p)) return '—'
+
   const sign = p > 0 ? '+' : p < 0 ? '−' : ''
   const abs = Math.abs(p)
   return `${sign}${formatWithCommas(abs, 2)}%`
 }
 
-export function arrowForDelta(delta: number) {
+/**
+ * Arrow + tone helper
+ * If delta is null → neutral state
+ */
+export function arrowForDelta(delta: number | null) {
+  if (delta == null || !Number.isFinite(delta)) {
+    return { arrow: '•', tone: 'flat' as const }
+  }
   if (delta > 0) return { arrow: '▲', tone: 'up' as const }
   if (delta < 0) return { arrow: '▼', tone: 'down' as const }
   return { arrow: '•', tone: 'flat' as const }
@@ -59,5 +77,9 @@ export function nowLocalTimeString(): string {
 
 export function hhmmss(): string {
   const d = new Date()
-  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  return d.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
 }
