@@ -15,8 +15,15 @@ export default function LiveOunceCard({
   const { arrow, tone } = arrowForDelta(delta)
   const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
 
+  // Animate only when this card mounts (and App.tsx remounts it only on real changes)
+  const [pulse, setPulse] = React.useState(true)
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setPulse(false), 650)
+    return () => window.clearTimeout(t)
+  }, [])
+
   return (
-    <div className="card liveOunce">
+    <div className={`card liveOunce ${pulse ? 'pricePulse' : ''}`}>
       <div className="cardTop">
         <div className="cardTitle">Live Gold (XAU)</div>
         <div className="pill subtle">per ounce</div>
