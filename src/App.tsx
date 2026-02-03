@@ -104,11 +104,7 @@ export default function App() {
         <div className="leftCol">
           <div className="gridTop">
             {/* key forces remount ONLY when price truly changes (pricePulse increments) */}
-            <LiveOunceCard
-              key={pricePulse}
-              ounceUsd={live.ounceUsd}
-              prevOunceUsd={live.prevOunceUsd}
-            />
+            <LiveOunceCard key={pricePulse} ounceUsd={live.ounceUsd} prevOunceUsd={live.prevOunceUsd} />
             <ConnectionStatus />
           </div>
 
@@ -116,8 +112,10 @@ export default function App() {
         </div>
 
         <div className="rightCol">
+          {/* ✅ IMPORTANT: pass prevOunceUsd so karat gain/loss follows ONLY market moves */}
           <KaratsCard
             ounceUsd={live.ounceUsd}
+            prevOunceUsd={live.prevOunceUsd}
             externalMarginIqd={mainMargin}
             onMainMarginSync={setMainMargin}
           />
