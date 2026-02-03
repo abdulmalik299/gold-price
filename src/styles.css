@@ -125,6 +125,16 @@ body{
   letter-spacing: 0.2px;
 }
 .inlineRight{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+/* LiveOunceCard: pulse only on real market change (card remount) */
+.pricePulse {
+  animation: pricePulse 650ms ease-out;
+}
+
+@keyframes pricePulse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
 
 .pill{
   display:inline-flex; gap:8px; align-items:center;
