@@ -7,33 +7,14 @@ import { getJSON, setJSON } from '../lib/storage'
 
 const KARATS: KaratKey[] = ['24k', '22k', '21k', '18k']
 
-type KaratRowState = {
-  // last computed total (used only to detect changes)
-  lastTotal: number | null
-  // previous total (used for delta/pct display + color persists)
-  prevTotal: number | null
-  // timestamp when the last change happened
-  lastChangeAt: number | null
-}
-
-type RowsState = Record<KaratKey, KaratRowState>
-
 type Props = {
   ounceUsd: number | null
+  prevOunceUsd: number | null
   onMainMarginSync?: (marginIqd: number) => void
   externalMarginIqd?: number
 }
 
-const ROWS_STORAGE_KEY = 'karatRows_v2'
-
-const DEFAULT_ROWS: RowsState = {
-  '24k': { lastTotal: null, prevTotal: null, lastChangeAt: null },
-  '22k': { lastTotal: null, prevTotal: null, lastChangeAt: null },
-  '21k': { lastTotal: null, prevTotal: null, lastChangeAt: null },
-  '18k': { lastTotal: null, prevTotal: null, lastChangeAt: null },
-}
-
-export default function KaratsCard({ ounceUsd, onMainMarginSync, externalMarginIqd }: Props) {
+export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, externalMarginIqd }: Props) {
   const [usdToIqdText, setUsdToIqdText] = React.useState(() => getJSON('usdToIqdText', ''))
   const [unit, setUnit] = React.useState<UnitKey>(() => getJSON('unit', 'mithqal'))
   const [marginIqd, setMarginIqd] = React.useState<number>(() => getJSON('marginIqd', 0))
@@ -53,57 +34,6 @@ export default function KaratsCard({ ounceUsd, onMainMarginSync, externalMarginI
   const usdToIqd = parseLooseNumber(usdToIqdText)
   const marginEnabled = !!usdToIqd && usdToIqd > 0
   const effectiveMargin = marginEnabled ? marginIqd : 0
-
-  // Per-karat independent gain/loss tracking (persisted)
-  const [rows, setRows] = React.useState<RowsState>(() => {
-    const saved = getJSON<RowsState>(ROWS_STORAGE_KEY, DEFAULT_ROWS)
-    // ensure all keys exist
-    return { ...DEFAULT_ROWS, ...saved }
-  })
-
-  // IMPORTANT:
-  // update prev/last ONLY when the computed TOTAL for that row changes
-  // this makes EACH KARAT have its own independent delta & percent
-  React.useEffect(() => {
-    if (ounceUsd == null) return
-
-    setRows((prev) => {
-      const next: RowsState = { ...prev }
-
-      for (const k of KARATS) {
-        const p = priceForKarat(ounceUsd, k, unit, usdToIqd, effectiveMargin)
-        const currTotal = p.total
-
-        const prevRow = prev[k] ?? DEFAULT_ROWS[k]
-        const lastTotal = prevRow.lastTotal
-
-        // seed first time (no delta yet)
-        if (lastTotal == null) {
-          next[k] = {
-            lastTotal: currTotal,
-            prevTotal: null,
-            lastChangeAt: Date.now(),
-          }
-          continue
-        }
-
-        // update only if changed
-        if (currTotal !== lastTotal) {
-          next[k] = {
-            lastTotal: currTotal,
-            prevTotal: lastTotal,
-            lastChangeAt: Date.now(),
-          }
-        } else {
-          next[k] = prevRow
-        }
-      }
-
-      setJSON(ROWS_STORAGE_KEY, next)
-      return next
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ounceUsd, unit, usdToIqdText, marginIqd])
 
   function onSlider(v: number) {
     setMarginIqd(v)
@@ -139,20 +69,29 @@ export default function KaratsCard({ ounceUsd, onMainMarginSync, externalMarginI
 
       <div className="karatList">
         {KARATS.map((k) => {
-          const p = ounceUsd == null ? null : priceForKarat(ounceUsd, k, unit, usdToIqd, effectiveMargin)
+          // Current computed price for this karat (depends on unit/usdToIqd/margin)
+          const curr =
+            ounceUsd == null ? null : priceForKarat(ounceUsd, k, unit, usdToIqd, effectiveMargin)
 
-          const currency = p?.currency ?? 'USD'
+          // Previous computed price for this karat, based ONLY on prevOunceUsd market price.
+          // ✅ This prevents USD→IQD edits and slider changes from faking “market moves”.
+          const prev =
+            prevOunceUsd == null
+              ? null
+              : priceForKarat(prevOunceUsd, k, unit, usdToIqd, effectiveMargin)
+
+          const currency = curr?.currency ?? 'USD'
           const decimals = currency === 'IQD' ? 0 : 2
 
-          const currTotal = p?.total ?? 0
-          const prevTotal = rows[k]?.prevTotal ?? null
+          const currTotal = curr?.total ?? 0
+          const prevTotal = prev?.total ?? null
 
           const { delta, pct } = deltaAndPercent(currTotal, prevTotal)
           const { arrow, tone } = arrowForDelta(delta)
           const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
 
-          const money = p ? formatMoney(p.total, currency, decimals) : '—'
-          const deltaMoney = p ? formatMoney(delta, currency, decimals) : '—'
+          const money = curr ? formatMoney(curr.total, currency, decimals) : '—'
+          const deltaMoney = curr ? formatMoney(delta, currency, decimals) : '—'
 
           return (
             <div className="karatRow" key={k}>
@@ -160,7 +99,7 @@ export default function KaratsCard({ ounceUsd, onMainMarginSync, externalMarginI
               <div className="karatV">
                 <div className="karatPrice">{money}</div>
 
-                {p ? (
+                {curr ? (
                   <div className={`changeRow mini ${cls}`}>
                     <span className="arrow">{arrow}</span>
                     <span>{deltaMoney}</span>
