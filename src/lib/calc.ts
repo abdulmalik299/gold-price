@@ -34,12 +34,29 @@ export function priceForKarat(
     const totalIqd = baseIqd + marginIqd
     return { currency: 'IQD' as const, base: baseIqd, total: totalIqd }
   }
+
   return { currency: 'USD' as const, base: baseUsd, total: baseUsd }
 }
 
-export function deltaAndPercent(now: number, prev: number | null) {
-  if (prev == null || !Number.isFinite(prev) || prev === 0) return { delta: 0, pct: 0 }
+/**
+ * Returns delta/pct for UI display.
+ * - If prev is null/invalid => returns nulls (UI can show "—" or 0 safely)
+ * - If prev is 0 => pct is null (avoid division by 0)
+ */
+export function deltaAndPercent(
+  now: number,
+  prev: number | null
+): { delta: number | null; pct: number | null } {
+  if (prev == null || !Number.isFinite(prev) || !Number.isFinite(now)) {
+    return { delta: null, pct: null }
+  }
+
   const delta = now - prev
+
+  if (prev === 0) {
+    return { delta, pct: null }
+  }
+
   const pct = (delta / prev) * 100
   return { delta, pct }
 }
