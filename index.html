@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LuxGold • Live Gold Dashboard</title>
+  <meta name="description" content="Luxury live gold price dashboard with IQD conversions, margins, expectation tools, advanced charting, and Samsung-style calculator." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span class="mark-dot"></span><span class="mark-line"></span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">LuxGold</div>
+        <div class="brand-sub">Live • IQD • Metrics • Chart • Calculator</div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="pill clock">
+        <span class="pill-label">Local time</span>
+        <span id="liveClock" class="pill-value">--:--:--</span>
+      </div>
+
+      <div class="pill updated">
+        <span class="pill-label">Last price change</span>
+        <span id="lastUpdated" class="pill-value">—</span>
+      </div>
+
+      <div class="pill conn" id="connPill" title="Connection status">
+        <span class="conn-dot" id="connDot" aria-hidden="true"></span>
+        <span id="connText" class="pill-value">Checking…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: 70% -->
+    <section class="maincol">
+      <div class="card hero">
+        <div class="hero-top">
+          <div>
+            <div class="card-title">Live Gold (XAU) • USD Base</div>
+            <div class="card-hint">Updates automatically. Deltas keep color (no reset-to-white).</div>
+          </div>
+          <div class="hero-actions">
+            <button id="btnForceTick" class="btn ghost" type="button">Force Refresh</button>
+            <button id="btnExportHistory" class="btn" type="button">Export History JSON</button>
+          </div>
+        </div>
+
+        <div class="hero-grid">
+          <div class="metric big">
+            <div class="metric-label">Ounce price</div>
+            <div class="metric-row">
+              <div id="livePrice" class="metric-value">—</div>
+              <div id="liveDelta" class="delta neutral" title="Change from previous tick">
+                <span class="delta-arrow" id="deltaArrow">—</span>
+                <span id="deltaAbs">—</span>
+                <span class="delta-sep">•</span>
+                <span id="deltaPct">—</span>
+              </div>
+            </div>
+            <div class="metric-subrow">
+              <div class="subpill">
+                <span class="subpill-label">Symbol</span>
+                <span class="subpill-value">XAU</span>
+              </div>
+              <div class="subpill">
+                <span class="subpill-label">Base</span>
+                <span class="subpill-value">USD</span>
+              </div>
+              <div class="subpill">
+                <span class="subpill-label">Noise filter</span>
+                <span class="subpill-value">&ge; $0.10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">USD → IQD (optional)</div>
+            <div class="input-row">
+              <input id="usdToIqd" inputmode="decimal" autocomplete="off" placeholder="e.g., 1500" />
+              <button id="btnClearFx" class="btn mini ghost" type="button" title="Clear">Clear</button>
+            </div>
+            <div class="tiny-hint">Leave empty to show $ prices. Fill to convert to IQD.</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Karats • per <span id="unitLabelLive">mithqal</span></div>
+
+            <div class="row2">
+              <div class="select">
+                <label for="unitLive">Unit</label>
+                <select id="unitLive">
+                  <option value="mithqal" selected>Mithqal (5g)</option>
+                  <option value="gram">Gram (1g)</option>
+                </select>
+              </div>
+              <div class="select">
+                <label for="karatLive">Karat</label>
+                <select id="karatLive">
+                  <option value="24">24k</option>
+                  <option value="22">22k</option>
+                  <option value="21" selected>21k</option>
+                  <option value="18">18k</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="karat-list" id="karatList">
+              <!-- populated by JS -->
+            </div>
+
+            <div class="slider-block">
+              <div class="slider-head">
+                <div>
+                  <div class="slider-title">Local margin (IQD only)</div>
+                  <div class="slider-sub">Adds to each result when IQD mode is enabled.</div>
+                </div>
+                <div class="slider-value" id="marginValue">0 IQD</div>
+              </div>
+              <input id="marginSlider" type="range" min="0" max="70000" step="1000" value="0" />
+              <div class="slider-foot">
+                <span>0</span><span>70,000</span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="metric-label">Selected price</div>
+            <div class="selected-price" id="selectedLivePrice">—</div>
+            <div class="tiny-hint">Karat + Unit selection updates instantly (no waiting for API tick).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Expectation</div>
+          <div class="card-hint">Type your expected ounce price. Everything updates instantly.</div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Expected ounce price</label>
+              <input id="expOunce" inputmode="decimal" placeholder="e.g., 2350.25" />
+            </div>
+            <div class="field">
+              <label>USD → IQD</label>
+              <input id="expUsdToIqd" inputmode="decimal" placeholder="e.g., 1500" />
+            </div>
+            <div class="field">
+              <label>Karat</label>
+              <select id="expKarat">
+                <option value="21" selected>21k</option>
+                <option value="22">22k</option>
+                <option value="18">18k</option>
+                <option value="24">24k</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Unit</label>
+              <select id="expUnit">
+                <option value="mithqal" selected>Mithqal (5g)</option>
+                <option value="gram">Gram (1g)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="slider-block compact">
+            <div class="slider-head">
+              <div>
+                <div class="slider-title">Expectation margin (IQD)</div>
+                <div class="slider-sub">Separate slider for expectation section.</div>
+              </div>
+              <div class="slider-value" id="expMarginValue">0 IQD</div>
+            </div>
+            <input id="expMarginSlider" type="range" min="0" max="70000" step="1000" value="0" />
+            <div class="slider-foot">
+              <span>0</span><span>70,000</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="result-row">
+            <div class="result">
+              <div class="result-label">Result</div>
+              <div id="expResult" class="result-value">—</div>
+            </div>
+            <div class="result">
+              <div class="result-label">Mode</div>
+              <div id="expMode" class="result-value small">USD</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Tax / Margin Solve</div>
+          <div class="card-hint">Estimate local margin from market inputs. Auto-sets the main slider.</div>
+
+          <div class="form-grid single">
+            <div class="field">
+              <label>Local ounce price you saw</label>
+              <input id="solveOunce" inputmode="decimal" placeholder="e.g., 2350" />
+            </div>
+            <div class="field">
+              <label>USD → IQD you saw</label>
+              <input id="solveUsdToIqd" inputmode="decimal" placeholder="e.g., 1500" />
+            </div>
+            <div class="field">
+              <label>Local 21k per mithqal you saw</label>
+              <input id="solve21Mithqal" inputmode="decimal" placeholder="e.g., 420000" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="result-row">
+            <div class="result">
+              <div class="result-label">Computed margin</div>
+              <div id="solveMargin" class="result-value">—</div>
+            </div>
+            <div class="result">
+              <div class="result-label">Action</div>
+              <button id="btnApplySolve" class="btn" type="button">Apply to main slider</button>
+            </div>
+          </div>
+          <div class="tiny-hint">Tip: This assumes 21k equation with 0.875 and mithqal = 5g.</div>
+        </div>
+      </div>
+
+      <div class="card chartcard">
+        <div class="charthead">
+          <div>
+            <div class="card-title">Gold Price History</div>
+            <div class="card-hint">Stores locally by default. Includes crosshair ruler (+) and scroll zoom.</div>
+          </div>
+          <div class="timeframes">
+            <button class="seg active" data-tf="24h" type="button">24H</button>
+            <button class="seg" data-tf="7d" type="button">7D</button>
+            <button class="seg" data-tf="1m" type="button">1M</button>
+            <button class="seg" data-tf="1y" type="button">1Y</button>
+            <button class="seg" data-tf="all" type="button">ALL</button>
+          </div>
+        </div>
+
+        <div class="chartwrap">
+          <canvas id="goldChart" aria-label="Gold price history chart"></canvas>
+        </div>
+
+        <div class="chartfoot">
+          <div class="legend">
+            <span class="chip up">Up</span>
+            <span class="chip down">Down</span>
+            <span class="chip neutral">Flat</span>
+          </div>
+          <div class="tiny-hint">
+            Wheel: zoom • Shift+Wheel: panX • Drag: pan • Double-click: reset view • Middle wheel works on desktop.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: 30% -->
+    <aside class="sidecol">
+      <div class="card calc">
+        <div class="calc-top">
+          <div>
+            <div class="card-title">Advanced Calculator</div>
+            <div class="card-hint">Samsung-like layout. ÷ symbol. History toggle.</div>
+          </div>
+          <button id="toggleHistory" class="btn mini ghost" type="button">History</button>
+        </div>
+
+        <div class="calc-screen">
+          <div id="calcExpr" class="calc-expr">0</div>
+          <div id="calcResult" class="calc-result">0</div>
+        </div>
+
+        <div class="calc-keys" id="calcKeys" aria-label="Calculator keys">
+          <!-- populated by JS -->
+        </div>
+
+        <div class="calc-history hidden" id="calcHistory">
+          <div class="history-title">History</div>
+          <div id="historyList" class="history-list"></div>
+          <button id="clearHistory" class="btn ghost full" type="button">Clear History</button>
+        </div>
+      </div>
+
+      <div class="card notes">
+        <div class="card-title">Notes</div>
+        <ul class="bullets">
+          <li>All numbers show thousands separators (e.g., 1,234,567).</li>
+          <li>Live deltas stay red/green until direction changes.</li>
+          <li>Margin sliders apply only in IQD mode.</li>
+          <li>Chart is smoothed by a Web Worker + noise filter.</li>
+        </ul>
+        <div class="small-warn">
+          <div class="warn-title">About GitHub storage</div>
+          <div class="warn-text">
+            Static websites can't write to GitHub by themselves without a server/token.
+            This project stores history in <b>localStorage</b> and can export JSON for committing to GitHub.
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Chart.js + plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+  <script src="logic.js"></script>
+</body>
+</html>
