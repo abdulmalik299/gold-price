@@ -126,15 +126,39 @@ body{
 }
 .inlineRight{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 /* LiveOunceCard: pulse only on real market change (card remount) */
+/* LiveOunceCard: scale pulse + gold glow flash only on real market change (card remount) */
 .pricePulse {
-  animation: pricePulse 650ms ease-out;
+  animation:
+    pricePulse 650ms ease-out,
+    goldGlowFlash 650ms ease-out;
 }
 
+/* keep your scale pulse */
 @keyframes pricePulse {
   0%   { transform: scale(1); }
   35%  { transform: scale(1.012); }
   100% { transform: scale(1); }
 }
+
+/* add a premium gold flash */
+@keyframes goldGlowFlash {
+  0% {
+    box-shadow: var(--shadow);
+    filter: brightness(1);
+  }
+  20% {
+    box-shadow:
+      0 0 0 1px rgba(247,215,122,0.35),
+      0 16px 70px rgba(247,215,122,0.18),
+      var(--shadow);
+    filter: brightness(1.06);
+  }
+  100% {
+    box-shadow: var(--shadow);
+    filter: brightness(1);
+  }
+}
+
 
 .pill{
   display:inline-flex; gap:8px; align-items:center;
