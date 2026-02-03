@@ -1,0 +1,4 @@
+- name: Build
+  env:
+    VITE_BASE: /${{ github.event.repository.name }}/
+  run: npm run build
