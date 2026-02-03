@@ -23,7 +23,7 @@ export default function LiveOunceCard({
   }, [])
 
   return (
-    <div className={`card liveOunce ${pulse ? 'pricePulse' : ''}`}>
+    <div className={`card liveOunce ${pulse ? 'pricePulse' : ''} ${cls}`}>
       <div className="cardTop">
         <div className="cardTitle">Live Gold (XAU)</div>
         <div className="pill subtle">per ounce</div>
