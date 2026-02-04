@@ -34,3 +34,15 @@ export async function fetchTicks(range: '24h' | '7d' | 'months' | 'years') {
   if (error) throw error
   return (data ?? []) as GoldTick[]
 }
+
+export async function fetchTickAtOrBefore(isoTime: string): Promise<GoldTick | null> {
+  const { data, error } = await supabase
+    .from('gold_ticks')
+    .select('id, ts, price')
+    .lte('ts', isoTime)
+    .order('ts', { ascending: false })
+    .limit(1)
+
+  if (error) throw error
+  return (data?.[0] as GoldTick | undefined) ?? null
+}
