@@ -21,8 +21,7 @@ html,body{ height:100%; }
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  background: radial-gradient(1000px 600px at 20% -10%, rgba(247,215,122,0.18), transparent 55%),
-              radial-gradient(900px 600px at 110% 10%, rgba(120, 90, 255,0.16), transparent 55%),
+  background: radial-gradient(1400px 900px at 35% -15%, rgba(247,215,122,0.18), transparent 70%),
               linear-gradient(180deg, var(--bg), var(--bg2));
   color: var(--text);
   overflow-x:hidden;
@@ -32,19 +31,6 @@ body{
   min-height: 100%;
   padding: 22px 22px 40px;
   position: relative;
-}
-
-.bgGlow{
-  position:absolute; inset:-200px -200px auto -200px;
-  height:520px;
-  background: radial-gradient(closest-side, rgba(247,215,122,0.10), transparent 65%);
-  filter: blur(18px);
-  pointer-events:none;
-  animation: floatGlow 180s ease-in-out infinite;
-}
-@keyframes floatGlow {
-  0%,100% { transform: translate(0, 0); }
-  50% { transform: translate(18px, 12px); }
 }
 
 .header{
@@ -132,14 +118,15 @@ body{
 /* LiveOunceCard: scale pulse + gold glow flash only on real market change (card remount) */
 .pricePulse {
   animation:
-    pricePulse 650ms ease-out,
-    goldGlowFlash 650ms ease-out;
+    pricePulse 2400ms ease-in-out,
+    goldGlowFlash 2400ms ease-in-out;
 }
 
 /* keep your scale pulse */
 @keyframes pricePulse {
   0%   { transform: scale(1); }
-  35%  { transform: scale(1.012); }
+  40%  { transform: scale(1.012); }
+  70%  { transform: scale(1.006); }
   100% { transform: scale(1); }
 }
 
@@ -149,12 +136,19 @@ body{
     box-shadow: var(--shadow);
     filter: brightness(1);
   }
-  20% {
+  45% {
     box-shadow:
       0 0 0 1px rgba(247,215,122,0.35),
       0 16px 70px rgba(247,215,122,0.18),
       var(--shadow);
     filter: brightness(1.06);
+  }
+    75% {
+    box-shadow:
+      0 0 0 1px rgba(247,215,122,0.28),
+      0 12px 54px rgba(247,215,122,0.12),
+      var(--shadow);
+    filter: brightness(1.03);
   }
   100% {
     box-shadow: var(--shadow);
@@ -224,20 +218,20 @@ body{
 /* When the card pulses, tint the glow based on direction */
 .liveOunce.chgUp.pricePulse {
   animation:
-    pricePulse 650ms ease-out,
-    goldGlowFlashUp 650ms ease-out;
+    pricePulse 2400ms ease-in-out,
+    goldGlowFlashUp 2400ms ease-in-out;
 }
 
 .liveOunce.chgDown.pricePulse {
   animation:
-    pricePulse 650ms ease-out,
-    goldGlowFlashDown 650ms ease-out;
+    pricePulse 2400ms ease-in-out,
+    goldGlowFlashDown 2400ms ease-in-out;;
 }
 
 /* UP: gold + slight green */
 @keyframes goldGlowFlashUp {
   0% { box-shadow: var(--shadow); filter: brightness(1); }
-  20% {
+  45% {
     box-shadow:
       0 0 0 1px rgba(247,215,122,0.35),
       0 16px 70px rgba(247,215,122,0.16),
@@ -245,19 +239,35 @@ body{
       var(--shadow);
     filter: brightness(1.06);
   }
+    75% {
+    box-shadow:
+      0 0 0 1px rgba(247,215,122,0.26),
+      0 12px 54px rgba(247,215,122,0.12),
+      0 12px 50px rgba(74,232,157,0.08),
+      var(--shadow);
+    filter: brightness(1.03);
+  }
   100% { box-shadow: var(--shadow); filter: brightness(1); }
 }
 
 /* DOWN: gold + slight red */
 @keyframes goldGlowFlashDown {
   0% { box-shadow: var(--shadow); filter: brightness(1); }
-  20% {
+  45% {
     box-shadow:
       0 0 0 1px rgba(247,215,122,0.30),
       0 16px 70px rgba(247,215,122,0.14),
       0 14px 60px rgba(255,82,122,0.12),
       var(--shadow);
     filter: brightness(1.05);
+  }
+    75% {
+    box-shadow:
+      0 0 0 1px rgba(247,215,122,0.24),
+      0 12px 54px rgba(247,215,122,0.10),
+      0 12px 50px rgba(255,82,122,0.09),
+      var(--shadow);
+    filter: brightness(1.03);
   }
   100% { box-shadow: var(--shadow); filter: brightness(1); }
 }
@@ -285,9 +295,9 @@ b{ color: rgba(255,255,255,0.92); }
 .btnGlow,.chipGlow,.segGlow{
   content:'';
   position:absolute; inset:-2px -30%;
-  background: linear-gradient(90deg, transparent, rgba(247,215,122,0.14), transparent);
+  background: linear-gradient(135deg, transparent, rgba(247,215,122,0.14), transparent);
   transform: translateX(-30%);
-  animation: sweep 2.6s linear infinite;
+  animation: sweep 180s linear infinite;
   pointer-events:none;
 }
 @keyframes sweep { 0%{ transform: translateX(-55%);} 100%{ transform: translateX(55%);} }
