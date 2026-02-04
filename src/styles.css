@@ -455,3 +455,44 @@ b{ color: rgba(255,255,255,0.92); }
   .bigNumber{ font-size: 30px; }
   .calcPreview{ font-size: 22px; }
 }
+
+/* Performance card */
+.perfTable{
+  margin-top: 10px;
+  border-radius: 16px;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.16);
+}
+.perfHead, .perfRow{
+  display:grid;
+  grid-template-columns: 1fr 1fr 0.8fr;
+  gap: 10px;
+  align-items:center;
+  padding: 10px 12px;
+}
+.perfHead{
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-weight: 900;
+  color: rgba(255,255,255,0.78);
+}
+.perfRow{
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.perfRow:last-child{ border-bottom:none; }
+.perfLabel{
+  font-weight: 900;
+  color: rgba(255,255,255,0.86);
+}
+.perfNum{
+  text-align:right;
+  font-weight: 900;
+}
+.perfCell{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
