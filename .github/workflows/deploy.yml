@@ -34,6 +34,7 @@ jobs:
       - name: Build
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_FORMSPREE_ENDPOINT: https://formspree.io/f/mjgondvv
         run: npm run build
 
       - name: Setup Pages
