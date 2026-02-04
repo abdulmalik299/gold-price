@@ -103,7 +103,7 @@ body{
   position:absolute; inset:-40% -40%;
   background: radial-gradient(closest-side, rgba(247,215,122,0.07), transparent 62%);
   opacity: 0.25;
-  transform: translate(-20%, -20%);
+  transform: translate(-200%, -200%);
   pointer-events:none;
 }
 .cardTop{
