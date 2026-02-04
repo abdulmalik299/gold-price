@@ -69,29 +69,26 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
 
       <div className="karatList">
         {KARATS.map((k) => {
-          // Current computed price for this karat (depends on unit/usdToIqd/margin)
-          const curr =
+          // CURRENT total (based on latest market ounceUsd)
+          const pNow =
             ounceUsd == null ? null : priceForKarat(ounceUsd, k, unit, usdToIqd, effectiveMargin)
 
-          // Previous computed price for this karat, based ONLY on prevOunceUsd market price.
-          // ✅ This prevents USD→IQD edits and slider changes from faking “market moves”.
-          const prev =
-            prevOunceUsd == null
-              ? null
-              : priceForKarat(prevOunceUsd, k, unit, usdToIqd, effectiveMargin)
+          // PREVIOUS total (based on prev market move prevOunceUsd)
+          const pPrev =
+            prevOunceUsd == null ? null : priceForKarat(prevOunceUsd, k, unit, usdToIqd, effectiveMargin)
 
-          const currency = curr?.currency ?? 'USD'
+          const currency = pNow?.currency ?? (usdToIqd && usdToIqd > 0 ? 'IQD' : 'USD')
           const decimals = currency === 'IQD' ? 0 : 2
 
-          const currTotal = curr?.total ?? 0
-          const prevTotal = prev?.total ?? null
+          const currTotal = pNow?.total ?? 0
+          const prevTotal = pPrev?.total ?? null
 
           const { delta, pct } = deltaAndPercent(currTotal, prevTotal)
           const { arrow, tone } = arrowForDelta(delta)
           const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
 
-          const money = curr ? formatMoney(curr.total, currency, decimals) : '—'
-          const deltaMoney = curr ? formatMoney(delta, currency, decimals) : '—'
+          const money = pNow ? formatMoney(pNow.total, currency, decimals) : '—'
+          const deltaMoney = pNow ? formatMoney(delta, currency, decimals) : '—'
 
           return (
             <div className="karatRow" key={k}>
@@ -99,7 +96,7 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
               <div className="karatV">
                 <div className="karatPrice">{money}</div>
 
-                {curr ? (
+                {pNow ? (
                   <div className={`changeRow mini ${cls}`}>
                     <span className="arrow">{arrow}</span>
                     <span>{deltaMoney}</span>
