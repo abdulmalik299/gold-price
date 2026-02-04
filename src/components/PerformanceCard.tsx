@@ -1,7 +1,7 @@
 import React from 'react'
 import { arrowForDelta, formatMoney, formatPercent } from '../lib/format'
 import { deltaAndPercent } from '../lib/calc'
-import { fetchTickAtOrBefore } from '../supabase'
+import { fetchTickAtOrBefore } from '../lib/supabase'
 
 type RowKey = 'today' | '30d' | '6m' | '1y' | '5y' | '20y'
 
