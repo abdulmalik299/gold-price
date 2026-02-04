@@ -29,8 +29,8 @@ body{
     radial-gradient(1400px 900px at 35% -15%, rgba(247,215,122,0.18), transparent 70%),
     linear-gradient(180deg,
       var(--bg) 0%,
-      var(--bg) 82%,
-      var(--bg2) 100%
+      var(--bg) 820%,
+      var(--bg2) 1000%
     );
 }
 
