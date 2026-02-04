@@ -7,6 +7,7 @@ import MarginSolverCard from './components/MarginSolverCard'
 import ConnectionStatus from './components/ConnectionStatus'
 import Calculator from './components/Calculator'
 import ChartCard from './components/ChartCard'
+import FeedbackCard from './components/FeedbackCard'
 
 import { fetchLiveOuncePrice } from './lib/goldApi'
 import { getJSON, setJSON } from './lib/storage'
@@ -120,6 +121,9 @@ export default function App() {
           <ExpectationCard />
           <MarginSolverCard onSolvedMargin={(m) => setMainMargin(m)} />
           <Calculator />
+        </div>
+        <div className="feedbackSlot">
+          <FeedbackCard />
         </div>
       </div>
 
