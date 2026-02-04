@@ -112,7 +112,6 @@ export default function App() {
         </div>
 
         <div className="rightCol">
-          {/* ✅ IMPORTANT: pass prevOunceUsd so karat gain/loss follows ONLY market moves */}
           <KaratsCard
             ounceUsd={live.ounceUsd}
             prevOunceUsd={live.prevOunceUsd}
