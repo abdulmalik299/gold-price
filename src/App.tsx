@@ -7,7 +7,6 @@ import MarginSolverCard from './components/MarginSolverCard'
 import ConnectionStatus from './components/ConnectionStatus'
 import Calculator from './components/Calculator'
 import ChartCard from './components/ChartCard'
-import PerformanceCard from './components/PerformanceCard'
 
 import { fetchLiveOuncePrice } from './lib/goldApi'
 import { getJSON, setJSON } from './lib/storage'
@@ -119,7 +118,6 @@ export default function App() {
             externalMarginIqd={mainMargin}
             onMainMarginSync={setMainMargin}
           />
-          <PerformanceCard liveOunceUsd={live.ounceUsd} />
           <ExpectationCard />
           <MarginSolverCard onSolvedMargin={(m) => setMainMargin(m)} />
           <Calculator />
