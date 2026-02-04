@@ -27,6 +27,9 @@ A production-ready Vite + React + TypeScript project designed for **GitHub Pages
 npm install
 npm run dev
 ```
+### Feedback form (Formspree)
+
+Set the Formspree endpoint via `VITE_FORMSPREE_ENDPOINT` (see `.env.example`). The dashboard falls back to the default endpoint if the variable is not set.
 
 ## Build
 
@@ -39,7 +42,8 @@ npm run build
 1. Create a GitHub repo.
 2. Push this project.
 3. In GitHub Actions, set env `VITE_BASE="/<repo-name>/"` before build.
-4. Deploy `dist/` to Pages.
+4. (Optional) add `VITE_FORMSPREE_ENDPOINT` if you want to override the default Formspree endpoint.
+5. Deploy `dist/` to Pages.
 
 A sample workflow is included in `.github/workflows/deploy.yml`.
 
