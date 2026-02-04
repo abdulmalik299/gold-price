@@ -34,3 +34,33 @@ export async function fetchTicks(range: '24h' | '7d' | 'months' | 'years') {
   if (error) throw error
   return (data ?? []) as GoldTick[]
 }
+
+/**
+ * Latest tick (used by Performance when live price is not available yet)
+ */
+export async function fetchLatestTick(): Promise<GoldTick | null> {
+  const { data, error } = await supabase
+    .from('gold_ticks')
+    .select('id, ts, price')
+    .order('ts', { ascending: false })
+    .limit(1)
+
+  if (error) throw error
+  return (data?.[0] ?? null) as GoldTick | null
+}
+
+/**
+ * Tick at or before a timestamp (baseline for fixed-period performance).
+ * We take the closest older-or-equal record.
+ */
+export async function fetchTickAtOrBefore(tsIso: string): Promise<GoldTick | null> {
+  const { data, error } = await supabase
+    .from('gold_ticks')
+    .select('id, ts, price')
+    .lte('ts', tsIso)
+    .order('ts', { ascending: false })
+    .limit(1)
+
+  if (error) throw error
+  return (data?.[0] ?? null) as GoldTick | null
+}
