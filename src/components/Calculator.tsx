@@ -6,7 +6,15 @@ type HistItem = { expr: string; result: string; at: number }
 
 const OPS = new Set(['+', '−', '×', '÷'])
 const PREC: Record<string, number> = { '+': 1, '−': 1, '×': 2, '÷': 2 }
-
+const isDigit = (ch: string) => /\d/.test(ch)
+function countUnclosedParens(value: string) {
+  let count = 0
+  for (const ch of value) {
+    if (ch === '(') count += 1
+    else if (ch === ')') count -= 1
+  }
+  return count
+}
 function tokenize(expr: string): string[] {
   const out: string[] = []
   let num = ''
@@ -92,7 +100,32 @@ export default function Calculator() {
     }
   }, [expr])
 
-  const press = (v: string) => setExpr((p) => p + v)
+  const press = (v: string) => setExpr((p) => {
+    const last = p.slice(-1)
+    const openParens = countUnclosedParens(p)
+
+    if (v === '(') {
+      if (!p) return '('
+      if (isDigit(last) || last === ')') return `${p}×(`
+      if (last === '(') return p
+      if (OPS.has(last)) return `${p}(`
+      return p
+    }
+
+    if (v === ')') {
+      if (!p || openParens <= 0) return p
+      if (OPS.has(last) || last === '(' || last === ')') return p
+      return `${p})`
+    }
+
+    if (OPS.has(v)) {
+      if (!p) return p
+      if (OPS.has(last) || last === '(') return p
+      return `${p}${v}`
+    }
+
+    return `${p}${v}`
+  })
   const clear = () => setExpr('')
   const back = () => setExpr((p) => p.slice(0, -1))
 
