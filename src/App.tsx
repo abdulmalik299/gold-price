@@ -91,7 +91,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="bgGlow" />
       <HeaderBar lastPriceUpdateAt={live.lastPriceUpdateAt} />
 
       {/* Since last market move label */}
