@@ -104,7 +104,7 @@ export default function App() {
         <div className="leftCol">
           <div className="gridTop">
             {/* key forces remount ONLY when price truly changes (pricePulse increments) */}
-            <LiveOunceCard key={pricePulse} ounceUsd={live.ounceUsd} prevOunceUsd={live.prevOunceUsd} />
+            <LiveOunceCard key={pricePulse} ounceUsd={live.ounceUsd} />
             <ConnectionStatus />
           </div>
 
