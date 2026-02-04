@@ -1,17 +1,44 @@
 import React from 'react'
 import { arrowForDelta, formatMoney, formatPercent } from '../lib/format'
 import { deltaAndPercent } from '../lib/calc'
-
+import { fetchTickAtOrBefore } from '../lib/supabase'
 export default function LiveOunceCard({
   ounceUsd,
-  prevOunceUsd,
 }: {
   ounceUsd: number | null
-  prevOunceUsd: number | null
 }) {
+    const [todayBase, setTodayBase] = React.useState<number | null>(null)
+  const [dayKey, setDayKey] = React.useState(() => new Date().toDateString())
+
+  React.useEffect(() => {
+    const t = window.setInterval(() => {
+      const nextKey = new Date().toDateString()
+      setDayKey((prevKey) => (prevKey === nextKey ? prevKey : nextKey))
+    }, 60_000)
+    return () => window.clearInterval(t)
+  }, [])
+
+  React.useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        if (ounceUsd == null) return
+        const start = new Date()
+        start.setHours(0, 0, 0, 0)
+        const tick = await fetchTickAtOrBefore(start.toISOString())
+        if (!alive) return
+        setTodayBase(tick?.price ?? null)
+      } catch {
+        // keep existing baseline
+      }
+    })()
+
+    return () => {
+      alive = false
+    }
+  }, [dayKey, ounceUsd])
   const now = ounceUsd ?? 0
-  const prev = prevOunceUsd
-  const { delta, pct } = deltaAndPercent(now, prev)
+  const { delta, pct } = deltaAndPercent(now, todayBase)
   const { arrow, tone } = arrowForDelta(delta)
   const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
 
@@ -32,13 +59,14 @@ export default function LiveOunceCard({
       <div className="bigNumber">{ounceUsd == null ? '—' : formatMoney(ounceUsd, 'USD')}</div>
 
       <div className={`changeRow ${cls}`}>
+        <span className="changeLabel">Today</span>
         <span className="arrow">{arrow}</span>
         <span className="changeAmt">{formatMoney(delta, 'USD')}</span>
         <span className="dotSep">•</span>
         <span className="changePct">{formatPercent(pct)}</span>
       </div>
 
-      <div className="mutedTiny">Gain/Loss stays colored until the next price change.</div>
+      <div className="mutedTiny">Shows change since 12:00 AM local time.</div>
     </div>
   )
 }
