@@ -11,39 +11,38 @@ type Props = {
 }
 
 /**
- * Format numeric string with commas while typing.
- * Keeps decimals if present.
+ * Formats a numeric string with thousands separators while keeping an optional decimal part.
  * Examples:
- *  "1234"      -> "1,234"
- *  "1234.56"   -> "1,234.56"
- *  "001234"    -> "1,234"
+ *  - "1500" -> "1,500"
+ *  - "1500." -> "1,500."
+ *  - "1500.25" -> "1,500.25"
  */
-function formatWithCommasLive(input: string): string {
-  if (!input) return ''
+function formatWithGrouping(raw: string) {
+  const cleaned = raw.replace(/[^\d.]/g, '')
+  if (cleaned === '') return ''
 
-  // remove commas first
-  const cleaned = input.replace(/,/g, '')
+  // keep only the first dot
+  const firstDot = cleaned.indexOf('.')
+  let intPart = cleaned
+  let decPart = ''
+  let hasDot = false
 
-  // split decimal part
-  const [intPart, decPart] = cleaned.split('.')
+  if (firstDot !== -1) {
+    hasDot = true
+    intPart = cleaned.slice(0, firstDot)
+    decPart = cleaned.slice(firstDot + 1).replace(/\./g, '')
+  }
 
-  // format integer part
-  const intFormatted = intPart
-    .replace(/^0+(?=\d)/, '') // remove leading zeros
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  // remove leading zeros nicely (but keep single zero if empty)
+  intPart = intPart.replace(/^0+(?=\d)/, '')
 
-  // re-attach decimal if exists
-  return decPart !== undefined ? `${intFormatted}.${decPart}` : intFormatted
+  const grouped = intPart === '' ? '0' : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(intPart))
+
+  if (hasDot) return decPart.length ? `${grouped}.${decPart}` : `${grouped}.`
+  return grouped
 }
 
-export default function NumberInput({
-  label,
-  value,
-  placeholder,
-  onChange,
-  hint,
-  suffix,
-}: Props) {
+export default function NumberInput({ label, value, placeholder, onChange, hint, suffix }: Props) {
   const invalid = value.trim() !== '' && parseLooseNumber(value) == null
 
   return (
@@ -56,22 +55,14 @@ export default function NumberInput({
       <input
         className={`input ${invalid ? 'inputInvalid' : ''}`}
         inputMode="decimal"
+        pattern="[0-9.,]*"
         placeholder={placeholder}
         value={value}
         onChange={(e) => {
-          // allow only digits and dot
-          const raw = e.target.value.replace(/[^\d.]/g, '')
-
-          // prevent more than one dot
-          const parts = raw.split('.')
-          const safe =
-            parts.length > 2
-              ? `${parts[0]}.${parts.slice(1).join('')}`
-              : raw
-
-          // format with commas
-          const formatted = formatWithCommasLive(safe)
-
+          const nextRaw = e.target.value.replace(/[^\d.,]/g, '')
+          // normalize commas away, then format with grouping
+          const normalized = nextRaw.replace(/,/g, '')
+          const formatted = formatWithGrouping(normalized)
           onChange(formatted)
         }}
       />
