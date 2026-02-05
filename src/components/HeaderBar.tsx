@@ -1,5 +1,6 @@
 import React from 'react'
 import { hhmmss, nowLocalTimeString } from '../lib/format'
+
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
@@ -112,6 +113,7 @@ export default function HeaderBar({
   }
 
   return (
+    <>
       <div className="header">
         <div className="brand">
           <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
@@ -160,6 +162,7 @@ export default function HeaderBar({
           </div>
         </div>
       ) : null}
+  
       {showInstallHelp ? (
         <div className="installModalBackdrop" role="dialog" aria-modal="true" aria-label="Install help">
           <div className="installModal">
