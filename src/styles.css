@@ -73,7 +73,8 @@ body::before{
 .brandTitle{ font-weight: 850; letter-spacing:0.2px; font-size: 18px; }
 .brandSub{ color: var(--muted2); font-size: 12px; margin-top: 2px; }
 
-.headerRight{ display:flex; gap:12px; align-items:stretch; }
+.headerRight{ display:flex; gap:12px; align-items:stretch; margin-left:auto; }
+.installBtn{ align-self:center; white-space:nowrap; }
 .clockCard,.updateCard{
   padding: 10px 12px;
   border-radius: 16px;
@@ -554,6 +555,31 @@ b{ color: rgba(255,255,255,0.92); }
   opacity: 0.9;
 }
 
+
+.installModalBackdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 18px;
+  z-index: 80;
+}
+.installModal{
+  width: min(420px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(180deg, rgba(22, 24, 32, 0.96), rgba(10, 12, 18, 0.96));
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+.installModalTitle{ font-weight: 900; color: rgba(255,243,196,0.95); }
+.installModalText{ color: rgba(255,255,255,0.82); line-height: 1.5; }
+
 /* Mobile layout: different view */
 @media (max-width: 980px){
   .layout{
@@ -565,7 +591,8 @@ b{ color: rgba(255,255,255,0.92); }
   }
   .gridTop{ grid-template-columns: 1fr; }
   .header{ flex-direction:column; align-items:stretch; }
-  .headerRight{ width:100%; justify-content:space-between; }
+  .headerRight{ width:100%; justify-content:flex-end; flex-wrap:wrap; }
+  .installBtn{ order: -1; }
   .chartWrap{ height: 320px; }
   .priceRail{ width: 62px; }
 }
@@ -575,4 +602,6 @@ b{ color: rgba(255,255,255,0.92); }
   .app{ padding: 16px 14px 32px; }
   .bigNumber{ font-size: 30px; }
   .calcPreview{ font-size: 22px; }
+  .headerRight{ justify-content:space-between; }
+  .installBtn{ margin-left:auto; }
 }
