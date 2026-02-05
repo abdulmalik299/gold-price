@@ -88,34 +88,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
 
-  const load = React.useCallback(async () => {
-    setLoading(true)
-    setErr(null)
-    try {
-      const ticks = await fetchTicks(range)
-      await setData(ticks)
-    } catch (e: any) {
-      setErr(e?.message ?? 'Failed to load history')
-    } finally {
-      setLoading(false)
-    }
-  }, [range])
-
-  React.useEffect(() => {
-    load()
-  }, [load])
-
-  // Refresh chart when a new live price arrives: fetch minimal newest ticks
-  React.useEffect(() => {
-    if (liveOunceUsd == null) return
-    // lightweight refresh every minute when live changes
-    // we won't hammer Supabase; edge function updates ticks anyway.
-    // This triggers chart to show newest point soon.
-    const id = window.setTimeout(() => load(), 30_000)
-    return () => window.clearTimeout(id)
-  }, [liveOunceUsd, load])
-
-  async function setData(ticks: GoldTick[]) {
+  const setData = React.useCallback(async (ticks: GoldTick[]) => {
     if (!canvasRef.current) return
     if (!workerRef.current) {
       workerRef.current = new Worker(new URL('../workers/chartWorker.ts', import.meta.url), { type: 'module' })
@@ -207,7 +180,34 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const ch = chartRef.current
     ch.data.datasets[0].data = data as any
     ch.update('none')
-  }
+  }, [range])
+
+  const load = React.useCallback(async () => {
+    setLoading(true)
+    setErr(null)
+    try {
+      const ticks = await fetchTicks(range)
+      await setData(ticks)
+    } catch (e: any) {
+      setErr(e?.message ?? 'Failed to load history')
+    } finally {
+      setLoading(false)
+    }
+  }, [range, setData])
+
+  React.useEffect(() => {
+    load()
+  }, [load])
+
+  // Refresh chart when a new live price arrives: fetch minimal newest ticks
+  React.useEffect(() => {
+    if (liveOunceUsd == null) return
+    // lightweight refresh every minute when live changes
+    // we won't hammer Supabase; edge function updates ticks anyway.
+    // This triggers chart to show newest point soon.
+    const id = window.setTimeout(() => load(), 30_000)
+    return () => window.clearTimeout(id)
+  }, [liveOunceUsd, load])
 
   function resetZoom() {
     const ch = chartRef.current as any
