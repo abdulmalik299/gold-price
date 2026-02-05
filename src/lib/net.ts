@@ -3,7 +3,7 @@ import { clamp } from './format'
 export type NetStatus = {
   online: boolean
   rttMs: number | null
-  downKbps: number | null
+  downKBps: number | null
   at: number
 }
 
@@ -26,7 +26,7 @@ async function measureRttMs(timeoutMs = 5000): Promise<number | null> {
   }
 }
 
-async function measureDownKbps(timeoutMs = 8000): Promise<number | null> {
+async function measureDownKBps(timeoutMs = 8000): Promise<number | null> {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), timeoutMs)
 
@@ -41,8 +41,8 @@ async function measureDownKbps(timeoutMs = 8000): Promise<number | null> {
     const bytes = buf.byteLength
     const seconds = (end - start) / 1000
     if (seconds <= 0) return null
-    const kbps = (bytes * 8) / 1024 / seconds
-    return clamp(kbps, 0, 1_000_000)
+    const kbPerSecond = bytes / 1024 / seconds
+    return clamp(kbPerSecond, 0, 1_000_000)
   } catch {
     return null
   } finally {
@@ -52,10 +52,10 @@ async function measureDownKbps(timeoutMs = 8000): Promise<number | null> {
 
 export async function sampleNetwork(): Promise<NetStatus> {
   const online = navigator.onLine
-  if (!online) return { online: false, rttMs: null, downKbps: null, at: Date.now() }
+  if (!online) return { online: false, rttMs: null, downKBps: null, at: Date.now() }
 
-  const [rttMs, downKbps] = await Promise.all([measureRttMs(), measureDownKbps()])
+  const [rttMs, downKBps] = await Promise.all([measureRttMs(), measureDownKBps()])
   // If we can't fetch, treat as offline-ish.
   const ok = rttMs != null
-  return { online: ok, rttMs: ok ? rttMs : null, downKbps: ok ? downKbps : null, at: Date.now() }
+  return { online: ok, rttMs: ok ? rttMs : null, downKBps: ok ? downKBps : null, at: Date.now() }
 }
