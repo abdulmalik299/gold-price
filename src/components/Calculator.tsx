@@ -221,7 +221,7 @@ export default function Calculator() {
       </div>
 
       <div className="mutedTiny">
-        Keyboard: Enter (=), Backspace (delete), Esc (clear). Division uses the symbol <b>÷</b>.
+         <b>÷</b>.
       </div>
     </div>
   )
