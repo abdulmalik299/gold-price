@@ -21,7 +21,7 @@ html,body{ height:100%; }
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  background: radial-gradient(1400px 900px at 35% -15%, rgba(247,215,122,0.18), transparent 70%),
+  background: radial-gradient(1400px 900px at 35% -15%, rgba(247,215,122,0.18), transparent 0%),
               linear-gradient(1800deg, var(--bg), var(--bg2));
   color: var(--text);
   overflow-x:hidden;
