@@ -3,8 +3,12 @@ import { hhmmss, nowLocalTimeString } from '../lib/format'
 
 export default function HeaderBar({
   lastPriceUpdateAt,
+  canInstall,
+  onInstall,
 }: {
   lastPriceUpdateAt: number | null
+  canInstall: boolean
+  onInstall: () => void
 }) {
   const [clock, setClock] = React.useState(hhmmss())
   
@@ -24,6 +28,13 @@ export default function HeaderBar({
       </div>
 
       <div className="headerRight">
+        {canInstall && (
+          <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
+            Install app
+            <span className="btnGlow" />
+          </button>
+        )}
+        
         <div className="clockCard">
           <div className="clock">{clock}</div>
           <div className="clockSub">{nowLocalTimeString()}</div>
