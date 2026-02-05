@@ -93,7 +93,7 @@ export default function FeedbackCard() {
       <div className="cardTop">
         <div>
           <div className="cardTitle" id="feedback-title">Feedback / Suggestions</div>
-          <div className="feedbackSub">Share ideas or report issues — it goes straight to my inbox.</div>
+          <div className="feedbackSub">Share ideas or report issues</div>
         </div>
       </div>
 
