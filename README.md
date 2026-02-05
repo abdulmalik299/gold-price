@@ -31,7 +31,6 @@ npm run dev
 
 Set the Formspree endpoint via `VITE_FORMSPREE_ENDPOINT` (see `.env.example`). The dashboard falls back to the default endpoint if the variable is not set.
 
-
 ## Android install prompt troubleshooting
 
 If install prompt is missing on Android, check:
