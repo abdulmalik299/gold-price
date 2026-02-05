@@ -15,8 +15,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'speed-test.bin', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'Live Gold Price Dashboard',
-        short_name: 'GoldDash',
+        name: 'Live Gold Monitor',
+        short_name: 'Gold Monitor',
         description: 'Luxury live gold price dashboard with IQD conversion, margin tools, chart history, and offline-ready PWA.',
         theme_color: '#0b0e14',
         background_color: '#0b0e14',
