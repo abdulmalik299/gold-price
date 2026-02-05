@@ -65,7 +65,7 @@ export default function ConnectionStatus() {
         </button>
       </div>
 
-      <div className="mutedTiny">Tip: If you are offline/slow, results may be delayed. Live price uses the Gold API.</div>
+      <div className="mutedTiny">Note: If your internet connection is slow or offline, price updates may be delayed. Live prices are fetched automatically from our data provider..</div>
     </div>
   )
 }
