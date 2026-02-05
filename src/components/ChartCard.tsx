@@ -265,7 +265,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       </div>
 
       <div className="mutedTiny">
-        The chart reads from Supabase. It will contain points even if the website was closed, because the Edge Function stores changes.
+        
       </div>
     </div>
   )
