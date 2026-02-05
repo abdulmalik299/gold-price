@@ -82,7 +82,7 @@ export default function MarginSolverCard({
         </button>
       </div>
 
-      <div className="mutedTiny">This solves margin for **21K mithqal** using your inputs, then syncs the main margin slider.</div>
+      <div className="mutedTiny">Calculates the margin for 21K mithqal based on your inputs and updates the main margin slider automatically..</div>
     </div>
   )
 }
