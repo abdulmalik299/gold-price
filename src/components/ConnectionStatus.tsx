@@ -3,7 +3,7 @@ import { sampleNetwork, type NetStatus } from '../lib/net'
 import { formatWithCommas } from '../lib/format'
 import { useInterval } from '../hooks/useInterval'
 
-function labelForKbps(kbps: number | null) {
+function labelForKBps(kbps: number | null) {
   if (kbps == null) return '—'
   if (kbps < 300) return 'Very Low'
   if (kbps < 1500) return 'Low'
@@ -11,8 +11,16 @@ function labelForKbps(kbps: number | null) {
   return 'Strong'
 }
 
+function formatDownloadSpeed(kbPerSecond: number | null) {
+  if (kbPerSecond == null) return '—'
+  if (kbPerSecond >= 1024) {
+    return `${formatWithCommas(kbPerSecond / 1024, 2)} MB/s`
+  }
+  return `${formatWithCommas(kbPerSecond, 0)} KB/s`
+}
+
 export default function ConnectionStatus() {
-  const [s, setS] = React.useState<NetStatus>({ online: navigator.onLine, rttMs: null, downKbps: null, at: Date.now() })
+  const [s, setS] = React.useState<NetStatus>({ online: navigator.onLine, rttMs: null, downKBps: null, at: Date.now() })
 
   const refresh = React.useCallback(async () => {
     const next = await sampleNetwork()
@@ -34,7 +42,7 @@ export default function ConnectionStatus() {
 
   const tone = s.online ? 'online' : 'offline'
   const ms = s.rttMs == null ? '—' : `${Math.round(s.rttMs)} ms`
-  const kbps = s.downKbps == null ? '—' : `${formatWithCommas(s.downKbps, 0)} kbps`
+  const downloadSpeed = formatDownloadSpeed(s.downKBps)
 
   return (
     <div className="card conn">
@@ -53,11 +61,11 @@ export default function ConnectionStatus() {
         </div>
         <div className="kv">
           <div className="k">Download</div>
-          <div className="v">{kbps}</div>
+          <div className="v">{downloadSpeed}</div>
         </div>
         <div className="kv">
           <div className="k">Quality</div>
-          <div className="v">{labelForKbps(s.downKbps)}</div>
+          <div className="v">{labelForKBps(s.downKBps)}</div>
         </div>
         <button className="btn" type="button" onClick={refresh}>
           <span className="btnGlow" />
