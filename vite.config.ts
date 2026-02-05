@@ -7,8 +7,10 @@ import { VitePWA } from 'vite-plugin-pwa'
  * - Set VITE_BASE to "/<repo-name>/" in GitHub Actions or local env.
  * - Example: VITE_BASE=/lux-gold-dashboard/
  */
+const base = process.env.VITE_BASE || '/'
+
 export default defineConfig({
-  base: process.env.VITE_BASE || '/',
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -18,13 +20,13 @@ export default defineConfig({
       manifest: {
         name: 'Live Gold Monitor',
         short_name: 'Gold Monitor',
-        id: '/',
+        id: base,
         description: 'Luxury live gold price dashboard with IQD conversion, margin tools, chart history, and offline-ready PWA.',
         theme_color: '#0b0e14',
         background_color: '#0b0e14',
         display: 'standalone',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
