@@ -18,7 +18,7 @@ export default function HeaderBar({
       <div className="brand">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
         <div>
-          <div className="brandTitle">GoldDash</div>
+          <div className="brandTitle">Live Gold Monitor</div>
           <div className="brandSub">Live luxury gold dashboard</div>
         </div>
       </div>
