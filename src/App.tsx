@@ -19,6 +19,11 @@ type LiveState = {
   lastPriceUpdateAt: number | null
 }
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
 function formatAge(ms: number) {
   if (ms < 0) ms = 0
   const s = Math.floor(ms / 1000)
@@ -40,7 +45,35 @@ export default function App() {
   )
   const [live, setLive] = React.useState<LiveState>(initialLiveRef.current)
   const [mainMargin, setMainMargin] = React.useState<number>(getJSON('mainMargin', 0))
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
 
+  React.useEffect(() => {
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setDeferredInstallPrompt(event as BeforeInstallPromptEvent)
+    }
+
+    const onAppInstalled = () => {
+      setDeferredInstallPrompt(null)
+    }
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onAppInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
+  }, [])
+
+  const handleInstall = React.useCallback(async () => {
+    if (!deferredInstallPrompt) return
+
+    await deferredInstallPrompt.prompt()
+    await deferredInstallPrompt.userChoice
+    setDeferredInstallPrompt(null)
+  }, [deferredInstallPrompt])
+  
   // Pulse counter: increments ONLY when price truly changes (for animation/remount)
   const [pricePulse, setPricePulse] = React.useState(0)
 
@@ -92,7 +125,13 @@ export default function App() {
 
   return (
     <div className="app">
-      <HeaderBar lastPriceUpdateAt={live.lastPriceUpdateAt} />
+      <HeaderBar
+        lastPriceUpdateAt={live.lastPriceUpdateAt}
+        canInstall={Boolean(deferredInstallPrompt)}
+        onInstall={() => {
+          void handleInstall()
+        }}
+      />
 
       {/* Since last market move label */}
       <div className="mutedTiny" style={{ padding: '0 18px', marginTop: 6 }}>
