@@ -129,7 +129,7 @@ export default function App() {
 
       <footer className="foot">
         <div className="mutedTiny">
-          Built for GitHub Pages. PWA-ready. Chart history comes from Supabase (Edge Function stores updates even when site is closed).
+          Optimized for fast, reliable access. Price history is continuously saved and kept up to date automatically.
         </div>
       </footer>
     </div>
