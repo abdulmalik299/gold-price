@@ -31,6 +31,18 @@ npm run dev
 
 Set the Formspree endpoint via `VITE_FORMSPREE_ENDPOINT` (see `.env.example`). The dashboard falls back to the default endpoint if the variable is not set.
 
+
+## Android install prompt troubleshooting
+
+If install prompt is missing on Android, check:
+
+- You are using HTTPS (or localhost).
+- The app is opened from the final deploy URL and not an in-app browser.
+- You interacted with the page at least once (Chrome engagement requirement).
+- The app is not already installed.
+
+This project now shows an **Install app** button when possible and a manual fallback guide when browser-level prompt is unavailable.
+
 ## Build
 
 ```bash
