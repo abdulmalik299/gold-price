@@ -1,5 +1,34 @@
 import React from 'react'
 import { hhmmss, nowLocalTimeString } from '../lib/format'
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
+function getPlatformFromUA() {
+  const ua = navigator.userAgent.toLowerCase()
+  if (/android/.test(ua)) return 'android'
+  if (/iphone|ipad|ipod/.test(ua)) return 'ios'
+  if (/windows/.test(ua)) return 'windows'
+  if (/mac os x|macintosh/.test(ua)) return 'mac'
+  return 'other'
+}
+
+function isIosSafari() {
+  const ua = navigator.userAgent
+  const isiOS = /iPad|iPhone|iPod/.test(ua)
+  const isWebKit = /WebKit/.test(ua)
+  const isCriOS = /CriOS/.test(ua)
+  const isFxiOS = /FxiOS/.test(ua)
+  return isiOS && isWebKit && !isCriOS && !isFxiOS
+}
+
+function isStandaloneApp() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  )
+}
 
 export default function HeaderBar({
   lastPriceUpdateAt,
@@ -7,35 +36,135 @@ export default function HeaderBar({
   lastPriceUpdateAt: number | null
 }) {
   const [clock, setClock] = React.useState(hhmmss())
+  const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
+  const [showIosHelp, setShowIosHelp] = React.useState(false)
+  const [showOpenHelp, setShowOpenHelp] = React.useState(false)
+  const [installed, setInstalled] = React.useState(false)
 
+  const platform = React.useMemo(getPlatformFromUA, [])
+  const iosSafari = React.useMemo(isIosSafari, [])
+  
   React.useEffect(() => {
     const id = window.setInterval(() => setClock(hhmmss()), 1000)
     return () => window.clearInterval(id)
   }, [])
 
+    React.useEffect(() => {
+    const knownInstalled = localStorage.getItem('pwa-installed') === '1'
+    setInstalled(knownInstalled || isStandaloneApp())
+
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setDeferredPrompt(event as BeforeInstallPromptEvent)
+    }
+
+    const onInstalled = () => {
+      localStorage.setItem('pwa-installed', '1')
+      setInstalled(true)
+      setDeferredPrompt(null)
+      setShowIosHelp(false)
+    }
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, [])
+
+  const runningStandalone = isStandaloneApp()
+  const canUsePrompt = Boolean(deferredPrompt)
+  const shouldShowInstallButton = !runningStandalone && (canUsePrompt || iosSafari || installed)
+
+  const installLabel = installed ? 'Open App' : 'Install App'
+
+  const onInstallClick = async () => {
+    if (installed) {
+      setShowOpenHelp(true)
+      return
+    }
+
+    if (canUsePrompt && deferredPrompt) {
+      await deferredPrompt.prompt()
+      const choice = await deferredPrompt.userChoice
+      if (choice.outcome === 'accepted') {
+        localStorage.setItem('pwa-installed', '1')
+        setInstalled(true)
+      }
+      setDeferredPrompt(null)
+      return
+    }
+
+    if (iosSafari) {
+      setShowIosHelp(true)
+    }
+  }
+
   return (
-    <div className="header">
-      <div className="brand">
-        <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
-        <div>
-          <div className="brandTitle">Live Gold Monitor</div>
-          <div className="brandSub">Live Gold Monitor & Tools</div>
-        </div>
-      </div>
-
-      <div className="headerRight">
-        <div className="clockCard">
-          <div className="clock">{clock}</div>
-          <div className="clockSub">{nowLocalTimeString()}</div>
+    <>
+      <div className="header">
+        <div className="brand">
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
+          <div>
+            <div className="brandTitle">Live Gold Monitor</div>
+            <div className="brandSub">Live Gold Monitor & Tools</div>
+          </div>
         </div>
 
-        <div className="updateCard">
-          <div className="updateTitle">Last price update</div>
-          <div className="updateValue">
-            {lastPriceUpdateAt ? new Date(lastPriceUpdateAt).toLocaleString() : '—'}
+        <div className="headerRight">
+          <div className="clockCard">
+            <div className="clock">{clock}</div>
+            <div className="clockSub">{nowLocalTimeString()}</div>
+          </div>
+
+          {shouldShowInstallButton ? (
+            <button
+              type="button"
+              className="btn btnGold installBtn"
+              onClick={onInstallClick}
+              aria-label={`Install app for ${platform}`}
+            >
+              {installLabel}
+            </button>
+          ) : null}
+
+          <div className="updateCard">
+            <div className="updateTitle">Last price update</div>
+            <div className="updateValue">
+              {lastPriceUpdateAt ? new Date(lastPriceUpdateAt).toLocaleString() : '—'}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {showIosHelp ? (
+        <div className="installModalBackdrop" role="dialog" aria-modal="true" aria-label="Install on iOS">
+          <div className="installModal">
+            <div className="installModalTitle">Install on iPhone / iPad</div>
+            <div className="installModalText">
+              In Safari, tap <b>Share</b>, then choose <b>Add to Home Screen</b>.
+            </div>
+            <button type="button" className="btn btnGold" onClick={() => setShowIosHelp(false)}>
+              Got it
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {showOpenHelp ? (
+        <div className="installModalBackdrop" role="dialog" aria-modal="true" aria-label="Open app">
+          <div className="installModal">
+            <div className="installModalTitle">App already installed</div>
+            <div className="installModalText">
+              Open the app from your Home Screen (iOS/Android) or Start Menu (Windows).
+            </div>
+            <button type="button" className="btn btnGold" onClick={() => setShowOpenHelp(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }
