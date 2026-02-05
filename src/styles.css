@@ -1,7 +1,7 @@
 /* Luxury dark theme with gold highlights, gradient glows, subtle animated light sweeps. */
 :root{
   --bg:#0b0e14;
-  --bg2:#07090f;
+  --bg2:#0b0e14;
   --card: rgba(255,255,255,0.06);
   --card2: rgba(255,255,255,0.08);
   --stroke: rgba(255,255,255,0.10);
