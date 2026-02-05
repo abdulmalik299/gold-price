@@ -5,7 +5,9 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
 }
 
-function getPlatformFromUA() {
+type Platform = 'android' | 'ios' | 'windows' | 'mac' | 'other'
+
+function getPlatformFromUA(): Platform {
   const ua = navigator.userAgent.toLowerCase()
   if (/android/.test(ua)) return 'android'
   if (/iphone|ipad|ipod/.test(ua)) return 'ios'
@@ -39,6 +41,7 @@ export default function HeaderBar({
   const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
   const [showIosHelp, setShowIosHelp] = React.useState(false)
   const [showOpenHelp, setShowOpenHelp] = React.useState(false)
+  const [showInstallHelp, setShowInstallHelp] = React.useState(false)
   const [installed, setInstalled] = React.useState(false)
 
   const platform = React.useMemo(getPlatformFromUA, [])
@@ -49,7 +52,7 @@ export default function HeaderBar({
     return () => window.clearInterval(id)
   }, [])
 
-    React.useEffect(() => {
+  React.useEffect(() => {
     const knownInstalled = localStorage.getItem('pwa-installed') === '1'
     setInstalled(knownInstalled || isStandaloneApp())
 
@@ -63,6 +66,7 @@ export default function HeaderBar({
       setInstalled(true)
       setDeferredPrompt(null)
       setShowIosHelp(false)
+      setShowInstallHelp(false)
     }
 
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
@@ -76,7 +80,9 @@ export default function HeaderBar({
 
   const runningStandalone = isStandaloneApp()
   const canUsePrompt = Boolean(deferredPrompt)
-  const shouldShowInstallButton = !runningStandalone && (canUsePrompt || iosSafari || installed)
+
+  // Keep the button visible in any browser context and hide only in installed standalone mode.
+  const shouldShowInstallButton = !runningStandalone
 
   const installLabel = installed ? 'Open App' : 'Install App'
 
@@ -99,11 +105,13 @@ export default function HeaderBar({
 
     if (iosSafari) {
       setShowIosHelp(true)
+      return
     }
+
+    setShowInstallHelp(true)
   }
 
   return (
-    <>
       <div className="header">
         <div className="brand">
           <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
@@ -152,6 +160,21 @@ export default function HeaderBar({
           </div>
         </div>
       ) : null}
+      {showInstallHelp ? (
+        <div className="installModalBackdrop" role="dialog" aria-modal="true" aria-label="Install help">
+          <div className="installModal">
+            <div className="installModalTitle">Install App</div>
+            <div className="installModalText">
+              If you do not see the native install popup, use your browser menu and choose
+              <b> Install app</b> or <b>Add to Home Screen</b>.
+            </div>
+            <button type="button" className="btn btnGold" onClick={() => setShowInstallHelp(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {showOpenHelp ? (
         <div className="installModalBackdrop" role="dialog" aria-modal="true" aria-label="Open app">
           <div className="installModal">
