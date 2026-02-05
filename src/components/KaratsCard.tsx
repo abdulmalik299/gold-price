@@ -62,7 +62,7 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
           value={usdToIqdText}
           onChange={setUsdToIqdText}
           placeholder="Leave empty for USD"
-          hint="If filled, karats convert to IQD. Live ounce stays USD."
+          hint="Enter a value to convert karat prices to IQD. The live ounce price remains in USD."
           suffix={marginEnabled ? 'IQD' : '$'}
         />
       </div>
