@@ -87,7 +87,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [loading, setLoading] = React.useState(false)
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
-
+  const userInteractedRef = React.useRef(false)
+  
   const setData = React.useCallback(async (ticks: GoldTick[]) => {
     if (!canvasRef.current) return
     if (!workerRef.current) {
@@ -105,6 +106,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     })
 
     const data = prepared.prepared
+    const staleOverlayData = buildStaleOverlay(data)
     const last = data.length ? data[data.length - 1] : null
     setLastPoint(last ? { ts: last.x, price: last.y } : null)
 
@@ -128,11 +130,21 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             },
           },
           zoom: {
-            pan: { enabled: true, mode: 'x', modifierKey: 'shift' },
+            pan: {
+              enabled: true,
+              mode: 'x',
+              modifierKey: 'shift',
+              onPan: () => {
+                userInteractedRef.current = true
+              },
+            },
             zoom: {
               wheel: { enabled: true },
               pinch: { enabled: true },
               mode: 'x',
+              onZoom: () => {
+                userInteractedRef.current = true
+              },
             },
             limits: { x: { min: 'original', max: 'original' } },
           },
@@ -170,15 +182,51 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               fill: true,
               backgroundColor: (c) => buildGradient(c.chart.ctx, c.chart),
             },
+            {
+              label: 'No price change > 5 min',
+              data: staleOverlayData,
+              parsing: false,
+              borderWidth: 6,
+              pointRadius: 0,
+              pointHitRadius: 0,
+              tension: 0,
+              spanGaps: false,
+              borderColor: 'rgba(255, 56, 56, 0.25)',
+              fill: false,
+            },
           ],
         },
         options,
       })
+      applyDefaultZoom(chartRef.current, range)
       return
     }
 
     const ch = chartRef.current
+    const prevScale = ch.scales.x
+    const prevMin = Number.isFinite(prevScale?.min) ? prevScale.min : null
+    const prevMax = Number.isFinite(prevScale?.max) ? prevScale.max : null
+    const prevSpan = prevMin != null && prevMax != null ? prevMax - prevMin : null
+    const prevData = ch.data.datasets[0].data as { x: number; y: number }[]
+    const prevDataMax = prevData.length ? prevData[prevData.length - 1].x : null
+    
     ch.data.datasets[0].data = data as any
+    ch.data.datasets[1].data = staleOverlayData as any
+
+    if (prevMin != null && prevMax != null && prevSpan != null && prevDataMax != null && data.length) {
+      const newDataMax = data[data.length - 1].x
+      const isFollowingLatest = Math.abs(prevDataMax - prevMax) < Math.max(30_000, prevSpan * 0.03)
+      const max = !userInteractedRef.current || isFollowingLatest ? newDataMax : prevMax
+      const min = max - prevSpan
+      ch.options.scales = {
+        ...ch.options.scales,
+        x: {
+          ...(ch.options.scales?.x ?? {}),
+          min,
+          max,
+        },
+      }
+    }
     ch.update('none')
   }, [range])
 
@@ -213,6 +261,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const ch = chartRef.current as any
     if (!ch) return
     if (typeof ch.resetZoom === 'function') ch.resetZoom()
+    userInteractedRef.current = false
+    applyDefaultZoom(chartRef.current, range)
+    chartRef.current?.update('none')
   }
 
   React.useEffect(() => {
@@ -269,4 +320,55 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       </div>
     </div>
   )
+}
+
+function buildStaleOverlay(points: { x: number; y: number }[], minimumMs = 5 * 60_000) {
+  if (points.length < 2) return []
+
+  const overlay = Array.from({ length: points.length }, () => ({ x: NaN, y: NaN }))
+  let runStart = 0
+
+  for (let i = 1; i <= points.length; i++) {
+    const sameAsStart = i < points.length && points[i].y === points[runStart].y
+    if (sameAsStart) continue
+
+    const end = i - 1
+    const isChangedAfterRun = i < points.length && points[i].y !== points[runStart].y
+    const runDuration = points[end].x - points[runStart].x
+    if (runDuration >= minimumMs && isChangedAfterRun) {
+      for (let p = runStart; p <= end; p++) {
+        overlay[p] = points[p]
+      }
+    }
+    runStart = i
+  }
+
+  return overlay
+}
+
+function getDefaultZoomWindowMs(range: RangeKey) {
+  if (range === '24h') return 4 * 60 * 60_000
+  if (range === '7d') return 36 * 60 * 60_000
+  if (range === 'months') return 45 * 24 * 60 * 60_000
+  return 365 * 24 * 60 * 60_000
+}
+
+function applyDefaultZoom(chart: Chart<'line'> | null, range: RangeKey) {
+  if (!chart) return
+  const data = chart.data.datasets[0].data as { x: number; y: number }[]
+  if (!data.length) return
+
+  const dataMax = data[data.length - 1].x
+  const dataMin = data[0].x
+  const windowMs = Math.max(getDefaultZoomWindowMs(range), 60_000)
+  const min = Math.max(dataMin, dataMax - windowMs)
+
+  chart.options.scales = {
+    ...chart.options.scales,
+    x: {
+      ...(chart.options.scales?.x ?? {}),
+      min,
+      max: dataMax,
+    },
+  }
 }
