@@ -58,6 +58,8 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
 
       <div className="karatInputs">
         <NumberInput
+          id="karats-usd-to-iqd"
+          name="karatsUsdToIqd"
           label="USD → IQD"
           value={usdToIqdText}
           onChange={setUsdToIqdText}
@@ -121,6 +123,9 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
         </div>
 
         <input
+          id="karat-margin-iqd"
+          name="karatMarginIqd"
+          aria-label="Margin / Tax (IQD)"
           type="range"
           min={0}
           max={70000}
