@@ -34,6 +34,8 @@ export default function ExpectationCard() {
 
       <div className="grid2">
         <NumberInput
+          id="expectation-ounce"
+          name="expectationOunce"
           label="Expected ounce price"
           value={ounceText}
           onChange={setOunceText}
@@ -42,6 +44,8 @@ export default function ExpectationCard() {
           suffix="$"
         />
         <NumberInput
+          id="expectation-usd-to-iqd"
+          name="expectationUsdToIqd"
           label="USD → IQD"
           value={usdToIqdText}
           onChange={setUsdToIqdText}
@@ -89,6 +93,9 @@ export default function ExpectationCard() {
           <div className="sliderVal">{marginEnabled ? `${marginIqd.toLocaleString('en-US')} IQD` : 'Enable by entering USD→IQD'}</div>
         </div>
         <input
+          id="expectation-margin-iqd"
+          name="expectationMarginIqd"
+          aria-label="Expectation margin (IQD)"
           type="range"
           min={0}
           max={70000}
