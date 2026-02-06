@@ -16,6 +16,7 @@ import {
   type Chart,
 } from 'chart.js'
 import 'chartjs-adapter-date-fns'
+import 'hammerjs'
 import zoomPlugin from 'chartjs-plugin-zoom'
 
 ChartJS.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Tooltip, Filler, Legend, zoomPlugin)
@@ -88,6 +89,14 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
   const userInteractedRef = React.useRef(false)
+  const isMiddlePanRef = React.useRef(false)
+  const middlePanPosRef = React.useRef<{ x: number; y: number } | null>(null)
+
+  const setPanMode = React.useCallback((chart: Chart, mode: 'x' | 'xy') => {
+    const zoomOptions = chart.options.plugins?.zoom
+    if (!zoomOptions?.pan) return
+    zoomOptions.pan.mode = mode
+  }, [])
   
   const setData = React.useCallback(async (ticks: GoldTick[]) => {
     if (!canvasRef.current) return
@@ -133,6 +142,19 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             pan: {
               enabled: true,
               mode: 'x',
+              onPanStart: ({ chart, event }) => {
+                const nativeEvent = event?.native
+                if (nativeEvent instanceof TouchEvent && nativeEvent.touches?.length === 2) {
+                  setPanMode(chart, 'xy')
+                  return true
+                }
+                if (nativeEvent instanceof MouseEvent && nativeEvent.button === 1) {
+                  setPanMode(chart, 'xy')
+                  return true
+                }
+                setPanMode(chart, 'x')
+                return true
+              },
               onPan: () => {
                 userInteractedRef.current = true
               },
@@ -226,7 +248,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       setXScaleRange(ch, min, max)
     }
     ch.update()
-  }, [range])
+  }, [range, setPanMode])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -273,6 +295,49 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     }
   }, [])
 
+  React.useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button !== 1) return
+      isMiddlePanRef.current = true
+      middlePanPosRef.current = { x: event.clientX, y: event.clientY }
+      event.preventDefault()
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isMiddlePanRef.current || !middlePanPosRef.current) return
+      const prev = middlePanPosRef.current
+      const deltaX = event.clientX - prev.x
+      const deltaY = event.clientY - prev.y
+      middlePanPosRef.current = { x: event.clientX, y: event.clientY }
+      const chart = chartRef.current as any
+      if (chart?.pan) {
+        chart.pan({ x: deltaX, y: deltaY }, undefined, 'default')
+        chart.update('none')
+        userInteractedRef.current = true
+      }
+    }
+
+    const endMiddlePan = () => {
+      isMiddlePanRef.current = false
+      middlePanPosRef.current = null
+    }
+
+    canvas.addEventListener('mousedown', handleMouseDown)
+    canvas.addEventListener('mousemove', handleMouseMove)
+    canvas.addEventListener('mouseup', endMiddlePan)
+    canvas.addEventListener('mouseleave', endMiddlePan)
+
+    return () => {
+      canvas.removeEventListener('mousedown', handleMouseDown)
+      canvas.removeEventListener('mousemove', handleMouseMove)
+      canvas.removeEventListener('mouseup', endMiddlePan)
+      canvas.removeEventListener('mouseleave', endMiddlePan)
+    }
+  }, [])
+
   return (
     <div className="card chart">
       <div className="cardTop">
@@ -302,7 +367,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         <div className="pill subtle">
           {loading ? 'Loading…' : err ? `Error: ${err}` : lastPoint ? `Last: ${formatMoney(lastPoint.price, 'USD')} @ ${new Date(lastPoint.ts).toLocaleString()}` : 'No data yet'}
         </div>
-        <div className="mutedTiny">Mouse wheel = zoom. Hold <b>Shift</b> + drag to pan. Move cursor for “+ ruler”.</div>
+        <div className="mutedTiny">
+          Desktop: mouse wheel = zoom, middle button drag = pan freely, left click drag = move left/right. Mobile: pinch to zoom, two fingers to pan, one finger to move left/right.
+        </div>
       </div>
 
       <div className="chartWrap">
