@@ -459,9 +459,11 @@ b{ color: rgba(255,255,255,0.92); }
   background: rgba(0,0,0,0.18);
 }
 .chartWrap canvas{ width:100% !important; height:100% !important; display:block; }
+.chartCanvas{ touch-action: none; }
 .rangeBtns{ display:flex; gap:8px; flex-wrap:wrap; }
 .chip{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
 .chipOn{ border-color: rgba(247,215,122,0.35); background: rgba(247,215,122,0.08); color: rgba(255,243,196,0.92); }
+.chipLive{ border-color: rgba(247,215,122,0.32); background: rgba(247,215,122,0.12); }
 
 .priceRail{
   position:absolute;
