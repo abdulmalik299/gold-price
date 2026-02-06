@@ -185,7 +185,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const nearLatest = Math.abs(xScale.max - latestTs) < Math.max(30_000, span * 0.03)
     setFollowLive(nearLatest)
     userInteractedRef.current = !nearLatest
-  }, [setFollowLive])
+  }, [range, setFollowLive])
 
   const setPrecisionMode = React.useCallback((enabled: boolean) => {
     precisionModeRef.current = enabled
@@ -193,7 +193,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ;(chartRef.current as ChartWithMeta).$precisionMode = enabled
       chartRef.current.update('none')
     }
-  }, [])
+  }, [setPanMode, updateFollowState])
   
   const setData = React.useCallback(async (ticks: GoldTick[]) => {
     if (!canvasRef.current) return
@@ -223,7 +223,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
-        events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'touchend'],
+        events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'touchend', 'mousedown', 'mouseup', 'wheel'],
         interaction: { mode: 'nearest', intersect: false, axis: 'x' },
         plugins: {
           legend: { display: false },
@@ -239,12 +239,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 if (!ctx[0]) return ''
                 const parsedX = ctx[0].parsed.x
                 if (parsedX == null) return ''
-                const scale = ctx[0].chart.scales.x
-                const span = scale && Number.isFinite(scale.min) && Number.isFinite(scale.max) ? scale.max - scale.min : undefined
                 if (precisionModeRef.current) {
                   return TIME_FORMATTERS.dateTime.format(new Date(parsedX))
                 }
-                return formatTimeTick(parsedX, rangeRef.current, span)
+                return TIME_FORMATTERS.dateTime.format(new Date(parsedX))
               },
               label: (ctx) => ` ${formatMoney(ctx.parsed.y, 'USD')}`,
             },
@@ -253,7 +251,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             pan: {
               enabled: true,
               mode: 'x',
-              modifierKey: 'shift',
               onPanStart: ({ chart, event }) => {
                 const nativeEvent = (event as unknown as { native?: Event; srcEvent?: Event })?.native
                   ?? (event as unknown as { srcEvent?: Event })?.srcEvent
@@ -292,7 +289,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               x: {
                 min: 'original',
                 max: 'original',
-                minRange: getDefaultZoomWindowMs(range),
+                minRange: 60_000,
               },
             },
           },
@@ -357,7 +354,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       const chartWithMeta = chartRef.current as ChartWithMeta
       chartWithMeta.$precisionMode = precisionModeRef.current
       chartWithMeta.$lastPrice = last ? { price: last.y, label: `${formatMoney(last.y, 'USD')}` } : null
-      applyDefaultZoom(chartRef.current, range)
+      applyDefaultZoom(chartRef.current)
       return
     }
 
@@ -385,7 +382,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       }
     }
     if (didRangeChange || isFollowingLiveRef.current) {
-      applyDefaultZoom(ch, range)
+      applyDefaultZoom(ch)
     }
     if (last?.y != null) {
       ;(ch as ChartWithMeta).$lastPrice = { price: last.y, label: `${formatMoney(last.y, 'USD')}` }
@@ -433,7 +430,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     if (typeof ch.resetZoom === 'function') ch.resetZoom()
     userInteractedRef.current = false
     setFollowLive(true)
-    applyDefaultZoom(chartRef.current, range)
+    applyDefaultZoom(chartRef.current)
     chartRef.current?.update()
   }
 
@@ -454,6 +451,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       if (event.button !== 1) return
       isMiddlePanRef.current = true
       middlePanPosRef.current = { x: event.clientX, y: event.clientY }
+      const chart = chartRef.current
+      if (chart) setPanMode(chart, 'xy')
       event.preventDefault()
     }
 
@@ -474,6 +473,11 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const endMiddlePan = () => {
       isMiddlePanRef.current = false
       middlePanPosRef.current = null
+      const chart = chartRef.current
+      if (chart) {
+        setPanMode(chart, 'x')
+        updateFollowState(chart, latestPointRef.current?.ts ?? null)
+      }
     }
 
     canvas.addEventListener('mousedown', handleMouseDown)
@@ -487,7 +491,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       canvas.removeEventListener('mouseup', endMiddlePan)
       canvas.removeEventListener('mouseleave', endMiddlePan)
     }
-  }, [])
+  }, [setPanMode, updateFollowState])
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -544,9 +548,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
 
   const handleBackToLive = React.useCallback(() => {
     setFollowLive(true)
-    applyDefaultZoom(chartRef.current, range)
+    applyDefaultZoom(chartRef.current)
     chartRef.current?.update()
-  }, [range, setFollowLive])
+  }, [setFollowLive])
 
   return (
     <div className="card chart">
@@ -584,7 +588,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
           {loading ? 'Loading…' : err ? `Error: ${err}` : lastPoint ? `Last: ${formatMoney(lastPoint.price, 'USD')} @ ${new Date(lastPoint.ts).toLocaleString()}` : 'No data yet'}
         </div>
         <div className="mutedTiny">
-          Desktop: wheel zooms, Shift+drag pans, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.
+          Desktop: wheel zooms, left-drag pans (x-axis), middle-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.
         </div>
       </div>
 
@@ -634,21 +638,18 @@ function getDefaultZoomWindowMs(range: RangeKey) {
   return 365 * 24 * 60 * 60_000
 }
 
-function applyDefaultZoom(chart: Chart | null, range: RangeKey) {
+function applyDefaultZoom(chart: Chart | null) {
   if (!chart) return
   const data = chart.data.datasets[0].data as { x: number; y: number }[]
   if (!data.length) return
 
   const dataMax = data[data.length - 1].x
   const dataMin = data[0].x
-  const windowMs = Math.max(getDefaultZoomWindowMs(range), 60_000)
-  const min = Math.max(dataMin, dataMax - windowMs)
-
-  setXScaleRange(chart, min, dataMax)
+  setXScaleRange(chart, dataMin, dataMax)
 
   const zoomOptions = chart.options.plugins?.zoom
   if (zoomOptions?.limits?.x) {
-    zoomOptions.limits.x.minRange = windowMs
+    zoomOptions.limits.x.minRange = 60_000
   }
 }
 
