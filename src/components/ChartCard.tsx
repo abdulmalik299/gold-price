@@ -133,7 +133,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             pan: {
               enabled: true,
               mode: 'x',
-              modifierKey: 'shift',
               onPan: () => {
                 userInteractedRef.current = true
               },
@@ -146,7 +145,13 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 userInteractedRef.current = true
               },
             },
-            limits: { x: { min: 'original', max: 'original' } },
+            limits: {
+              x: {
+                min: 'original',
+                max: 'original',
+                minRange: getDefaultZoomWindowMs(range),
+              },
+            },
           },
         },
         scales: {
@@ -218,16 +223,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       const isFollowingLatest = Math.abs(prevDataMax - prevMax) < Math.max(30_000, prevSpan * 0.03)
       const max = !userInteractedRef.current || isFollowingLatest ? newDataMax : prevMax
       const min = max - prevSpan
-      ch.options.scales = {
-        ...ch.options.scales,
-        x: {
-          ...(ch.options.scales?.x ?? {}),
-          min,
-          max,
-        },
-      }
+      setXScaleRange(ch, min, max)
     }
-    ch.update('none')
+    ch.update()
   }, [range])
 
   const load = React.useCallback(async () => {
@@ -263,7 +261,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     if (typeof ch.resetZoom === 'function') ch.resetZoom()
     userInteractedRef.current = false
     applyDefaultZoom(chartRef.current, range)
-    chartRef.current?.update('none')
+    chartRef.current?.update()
   }
 
   React.useEffect(() => {
@@ -353,7 +351,7 @@ function getDefaultZoomWindowMs(range: RangeKey) {
   return 365 * 24 * 60 * 60_000
 }
 
-function applyDefaultZoom(chart: Chart<'line'> | null, range: RangeKey) {
+function applyDefaultZoom(chart: Chart | null, range: RangeKey) {
   if (!chart) return
   const data = chart.data.datasets[0].data as { x: number; y: number }[]
   if (!data.length) return
@@ -363,12 +361,17 @@ function applyDefaultZoom(chart: Chart<'line'> | null, range: RangeKey) {
   const windowMs = Math.max(getDefaultZoomWindowMs(range), 60_000)
   const min = Math.max(dataMin, dataMax - windowMs)
 
-  chart.options.scales = {
-    ...chart.options.scales,
-    x: {
-      ...(chart.options.scales?.x ?? {}),
-      min,
-      max: dataMax,
-    },
+  setXScaleRange(chart, min, dataMax)
+
+  const zoomOptions = chart.options.plugins?.zoom
+  if (zoomOptions?.limits?.x) {
+    zoomOptions.limits.x.minRange = windowMs
   }
+}
+
+function setXScaleRange(chart: Chart, min: number, max: number) {
+  const xScale = chart.options.scales?.x
+  if (!xScale || Array.isArray(xScale)) return
+  xScale.min = min
+  xScale.max = max
 }
