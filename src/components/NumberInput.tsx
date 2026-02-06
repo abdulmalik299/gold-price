@@ -8,6 +8,8 @@ type Props = {
   onChange: (v: string) => void
   hint?: string
   suffix?: string
+  id?: string
+  name?: string
 }
 
 /**
@@ -43,17 +45,24 @@ export default function NumberInput({
   onChange,
   hint,
   suffix,
+  id,
+  name,
 }: Props) {
+  const autoId = React.useId()
+  const inputId = id ?? autoId
+  const inputName = name ?? id ?? inputId
   const invalid = value.trim() !== '' && parseLooseNumber(value) == null
 
   return (
-    <label className="field">
+    <label className="field" htmlFor={inputId}>
       <div className="fieldTop">
         <span className="fieldLabel">{label}</span>
         {suffix ? <span className="fieldSuffix">{suffix}</span> : null}
       </div>
 
       <input
+        id={inputId}
+        name={inputName}
         className={`input ${invalid ? 'inputInvalid' : ''}`}
         inputMode="decimal"
         placeholder={placeholder}
