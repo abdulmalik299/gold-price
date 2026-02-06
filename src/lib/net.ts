@@ -7,6 +7,12 @@ export type NetStatus = {
   at: number
 }
 
+type NavigatorWithConnection = Navigator & {
+  connection?: {
+    downlink?: number
+  }
+}
+
 async function measureRttMs(timeoutMs = 5000): Promise<number | null> {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -50,12 +56,20 @@ async function measureDownKBps(timeoutMs = 8000): Promise<number | null> {
   }
 }
 
+function fallbackDownKBpsFromConnection(): number | null {
+  const downlinkMbps = (navigator as NavigatorWithConnection).connection?.downlink
+  if (downlinkMbps == null || !Number.isFinite(downlinkMbps) || downlinkMbps <= 0) return null
+  return clamp(downlinkMbps * 1024 / 8, 0, 1_000_000)
+}
+
 export async function sampleNetwork(): Promise<NetStatus> {
   const online = navigator.onLine
   if (!online) return { online: false, rttMs: null, downKBps: null, at: Date.now() }
 
-  const [rttMs, downKBps] = await Promise.all([measureRttMs(), measureDownKBps()])
-  // If we can't fetch, treat as offline-ish.
-  const ok = rttMs != null
+  const [rttMs, measuredDownKBps] = await Promise.all([measureRttMs(), measureDownKBps()])
+  const downKBps = measuredDownKBps ?? fallbackDownKBpsFromConnection()
+
+  // If both metrics are missing, treat this sample as offline-ish.
+  const ok = rttMs != null || downKBps != null
   return { online: ok, rttMs: ok ? rttMs : null, downKBps: ok ? downKBps : null, at: Date.now() }
 }
