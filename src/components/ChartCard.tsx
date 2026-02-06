@@ -29,24 +29,10 @@ const RANGE_ITEMS: { key: RangeKey; label: string }[] = [
   { key: 'years', label: 'Years' },
 ]
 
-type ChartWithMeta = Chart & {
-  $precisionMode?: boolean
-  $lastPrice?: { price: number; label: string } | null
-}
-
-const TIME_FORMATTERS = {
-  hour: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }),
-  day: new Intl.DateTimeFormat(undefined, { weekday: 'short', day: '2-digit', month: 'short' }),
-  month: new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }),
-  year: new Intl.DateTimeFormat(undefined, { year: 'numeric' }),
-  dateTime: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
-}
-
 // Crosshair (+ ruler) plugin
 const crosshairPlugin = {
   id: 'luxCrosshair',
-  afterDraw(chart: ChartWithMeta) {
-    if (!chart.$precisionMode) return
+  afterDraw(chart: Chart) {
     const ctx = chart.ctx
     const active = chart.getActiveElements()
     if (!active || active.length === 0) return
@@ -83,55 +69,6 @@ const crosshairPlugin = {
 
 ChartJS.register(crosshairPlugin)
 
-const lastPricePlugin = {
-  id: 'luxLastPrice',
-  afterDatasetsDraw(chart: ChartWithMeta) {
-    const lastPrice = chart.$lastPrice
-    if (!lastPrice) return
-    const yScale = chart.scales.y
-    const { chartArea } = chart
-    if (!yScale || !chartArea) return
-    const y = yScale.getPixelForValue(lastPrice.price)
-    if (!Number.isFinite(y)) return
-
-    const ctx = chart.ctx
-    ctx.save()
-    ctx.strokeStyle = 'rgba(247, 215, 122, 0.35)'
-    ctx.lineWidth = 1
-    ctx.setLineDash([4, 4])
-    ctx.beginPath()
-    ctx.moveTo(chartArea.left, y)
-    ctx.lineTo(chartArea.right, y)
-    ctx.stroke()
-    ctx.setLineDash([])
-
-    const label = lastPrice.label
-    ctx.font = '600 11px system-ui, -apple-system, sans-serif'
-    const paddingX = 6
-    const paddingY = 4
-    const textWidth = ctx.measureText(label).width
-    const boxWidth = textWidth + paddingX * 2
-    const boxHeight = 18
-    const boxX = chartArea.right - boxWidth - 6
-    const boxY = y - boxHeight / 2
-
-    ctx.fillStyle = 'rgba(10, 12, 18, 0.75)'
-    ctx.strokeStyle = 'rgba(247, 215, 122, 0.35)'
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 8)
-    ctx.fill()
-    ctx.stroke()
-
-    ctx.fillStyle = 'rgba(255, 243, 196, 0.9)'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(label, boxX + paddingX, boxY + boxHeight / 2)
-    ctx.restore()
-  },
-}
-
-ChartJS.register(lastPricePlugin)
-
 function buildGradient(ctx: CanvasRenderingContext2D, chart: Chart) {
   const { chartArea } = chart
   if (!chartArea) return 'rgba(247, 215, 122, 0.2)'
@@ -151,47 +88,14 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [loading, setLoading] = React.useState(false)
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
-  const [isFollowingLive, setIsFollowingLive] = React.useState(true)
   const userInteractedRef = React.useRef(false)
-  const isFollowingLiveRef = React.useRef(true)
-  const precisionModeRef = React.useRef(false)
-  const latestPointRef = React.useRef<{ ts: number; price: number } | null>(null)
-  const rangeRef = React.useRef(range)
   const isMiddlePanRef = React.useRef(false)
   const middlePanPosRef = React.useRef<{ x: number; y: number } | null>(null)
-  const longPressTimerRef = React.useRef<number | null>(null)
-  const lastTapRef = React.useRef<number>(0)
   
   const setPanMode = React.useCallback((chart: Chart, mode: 'x' | 'xy') => {
     const zoomOptions = chart.options.plugins?.zoom
     if (!zoomOptions?.pan) return
     zoomOptions.pan.mode = mode
-  }, [])
-
-  const setFollowLive = React.useCallback((next: boolean) => {
-    isFollowingLiveRef.current = next
-    setIsFollowingLive(next)
-    if (next) {
-      userInteractedRef.current = false
-    }
-  }, [])
-
-  const updateFollowState = React.useCallback((chart: Chart, latestTs?: number | null) => {
-    if (!latestTs) return
-    const xScale = chart.scales.x
-    if (!xScale || !Number.isFinite(xScale.min) || !Number.isFinite(xScale.max)) return
-    const span = xScale.max - xScale.min
-    const nearLatest = Math.abs(xScale.max - latestTs) < Math.max(30_000, span * 0.03)
-    setFollowLive(nearLatest)
-    userInteractedRef.current = !nearLatest
-  }, [setFollowLive])
-
-  const setPrecisionMode = React.useCallback((enabled: boolean) => {
-    precisionModeRef.current = enabled
-    if (chartRef.current) {
-      ;(chartRef.current as ChartWithMeta).$precisionMode = enabled
-      chartRef.current.update('none')
-    }
   }, [])
   
   const setData = React.useCallback(async (ticks: GoldTick[]) => {
@@ -214,15 +118,12 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const staleOverlayData = buildStaleOverlay(data)
     const last = data.length ? data[data.length - 1] : null
     setLastPoint(last ? { ts: last.x, price: last.y } : null)
-    latestPointRef.current = last ? { ts: last.x, price: last.y } : null
     
     const ctx = canvasRef.current.getContext('2d')!
     if (!chartRef.current) {
       const options: ChartOptions<'line'> = {
         responsive: true,
         maintainAspectRatio: false,
-        animation: false,
-        events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'touchend'],
         interaction: { mode: 'nearest', intersect: false, axis: 'x' },
         plugins: {
           legend: { display: false },
@@ -234,12 +135,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             titleColor: 'rgba(255,255,255,0.92)',
             bodyColor: 'rgba(255,255,255,0.82)',
             callbacks: {
-              title: (ctx) => {
-                if (!precisionModeRef.current || !ctx[0]) return ''
-                const parsedX = ctx[0].parsed.x
-                if (parsedX == null) return ''
-                return TIME_FORMATTERS.dateTime.format(new Date(parsedX))
-              },
               label: (ctx) => ` ${formatMoney(ctx.parsed.y, 'USD')}`,
             },
           },
@@ -247,10 +142,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             pan: {
               enabled: true,
               mode: 'x',
-              modifierKey: 'shift',
               onPanStart: ({ chart, event }) => {
-                const nativeEvent = (event as unknown as { native?: Event; srcEvent?: Event })?.native
-                  ?? (event as unknown as { srcEvent?: Event })?.srcEvent
+                const nativeEvent = event?.native
                 if (nativeEvent instanceof TouchEvent && nativeEvent.touches?.length === 2) {
                   setPanMode(chart, 'xy')
                   return true
@@ -264,22 +157,14 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               },
               onPan: () => {
                 userInteractedRef.current = true
-                setFollowLive(false)
-              },
-              onPanComplete: ({ chart }) => {
-                updateFollowState(chart, latestPointRef.current?.ts ?? null)
               },
             },
             zoom: {
-              wheel: { enabled: true, speed: 0.08 },
+              wheel: { enabled: true },
               pinch: { enabled: true },
               mode: 'x',
               onZoom: () => {
                 userInteractedRef.current = true
-                setFollowLive(false)
-              },
-              onZoomComplete: ({ chart }) => {
-                updateFollowState(chart, latestPointRef.current?.ts ?? null)
               },
             },
             limits: {
@@ -299,14 +184,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               color: 'rgba(255,255,255,0.55)',
               maxRotation: 0,
               autoSkip: true,
-              autoSkipPadding: 24,
-              callback(value) {
-                const scale = this as any
-                const min = scale.min
-                const max = scale.max
-                const span = Number.isFinite(min) && Number.isFinite(max) ? max - min : null
-                return formatTimeTick(value, rangeRef.current, span ?? undefined)
-              },
             },
           },
           y: {
@@ -348,9 +225,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         },
         options,
       })
-      const chartWithMeta = chartRef.current as ChartWithMeta
-      chartWithMeta.$precisionMode = precisionModeRef.current
-      chartWithMeta.$lastPrice = last ? { price: last.y, label: `${formatMoney(last.y, 'USD')}` } : null
       applyDefaultZoom(chartRef.current, range)
       return
     }
@@ -369,20 +243,12 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     if (prevMin != null && prevMax != null && prevSpan != null && prevDataMax != null && data.length) {
       const newDataMax = data[data.length - 1].x
       const isFollowingLatest = Math.abs(prevDataMax - prevMax) < Math.max(30_000, prevSpan * 0.03)
-      const max = isFollowingLiveRef.current || (!userInteractedRef.current && isFollowingLatest) ? newDataMax : prevMax
+      const max = !userInteractedRef.current || isFollowingLatest ? newDataMax : prevMax
       const min = max - prevSpan
       setXScaleRange(ch, min, max)
-      if (max === newDataMax && !isFollowingLiveRef.current) {
-        setFollowLive(true)
-      }
-    }
-    if (last?.y != null) {
-      ;(ch as ChartWithMeta).$lastPrice = { price: last.y, label: `${formatMoney(last.y, 'USD')}` }
-    } else {
-      ;(ch as ChartWithMeta).$lastPrice = null
     }
     ch.update()
-  }, [range, setFollowLive, setPanMode])
+  }, [range, setPanMode])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -401,11 +267,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     load()
   }, [load])
 
-    React.useEffect(() => {
-    rangeRef.current = range
-    setFollowLive(true)
-  }, [range, setFollowLive])
-  
   // Refresh chart when a new live price arrives: fetch minimal newest ticks
   React.useEffect(() => {
     if (liveOunceUsd == null) return
@@ -421,7 +282,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     if (!ch) return
     if (typeof ch.resetZoom === 'function') ch.resetZoom()
     userInteractedRef.current = false
-    setFollowLive(true)
     applyDefaultZoom(chartRef.current, range)
     chartRef.current?.update()
   }
@@ -478,65 +338,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     }
   }, [])
 
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.altKey) setPrecisionMode(true)
-    }
-    const handleKeyUp = () => {
-      setPrecisionMode(false)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [setPrecisionMode])
-
-  React.useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.pointerType !== 'touch') return
-      const now = Date.now()
-      if (now - lastTapRef.current < 280) {
-        resetZoom()
-        lastTapRef.current = 0
-        return
-      }
-      lastTapRef.current = now
-      if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = window.setTimeout(() => {
-        setPrecisionMode(true)
-      }, 350)
-    }
-
-    const handlePointerUp = () => {
-      if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-      setPrecisionMode(false)
-    }
-
-    canvas.addEventListener('pointerdown', handlePointerDown)
-    canvas.addEventListener('pointerup', handlePointerUp)
-    canvas.addEventListener('pointercancel', handlePointerUp)
-    canvas.addEventListener('pointerleave', handlePointerUp)
-
-    return () => {
-      canvas.removeEventListener('pointerdown', handlePointerDown)
-      canvas.removeEventListener('pointerup', handlePointerUp)
-      canvas.removeEventListener('pointercancel', handlePointerUp)
-      canvas.removeEventListener('pointerleave', handlePointerUp)
-    }
-  }, [resetZoom, setPrecisionMode])
-
-  const handleBackToLive = React.useCallback(() => {
-    setFollowLive(true)
-    applyDefaultZoom(chartRef.current, range)
-    chartRef.current?.update()
-  }, [range, setFollowLive])
-
   return (
     <div className="card chart">
       <div className="cardTop">
@@ -555,12 +356,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               </button>
             ))}
           </div>
-          {!isFollowingLive && (
-            <button type="button" className="chip chipLive" onClick={handleBackToLive}>
-              <span className="chipGlow" />
-              Back to Live
-            </button>
-          )}
           <button type="button" className="chip" onClick={resetZoom}>
             <span className="chipGlow" />
             Reset zoom
@@ -573,12 +368,12 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
           {loading ? 'Loading…' : err ? `Error: ${err}` : lastPoint ? `Last: ${formatMoney(lastPoint.price, 'USD')} @ ${new Date(lastPoint.ts).toLocaleString()}` : 'No data yet'}
         </div>
         <div className="mutedTiny">
-          Desktop: wheel zooms, Shift+drag pans, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.
+          Desktop: mouse wheel = zoom, middle button drag = pan freely, left click drag = move left/right. Mobile: pinch to zoom, two fingers to pan, one finger to move left/right.
         </div>
       </div>
 
       <div className="chartWrap">
-        <canvas ref={canvasRef} className="chartCanvas" />
+        <canvas ref={canvasRef} />
         <div className="priceRail">
           <div className="priceRailTitle">Price</div>
           <div className="priceRailHint">Scroll wheel here to zoom too.</div>
@@ -646,20 +441,4 @@ function setXScaleRange(chart: Chart, min: number, max: number) {
   if (!xScale || Array.isArray(xScale)) return
   xScale.min = min
   xScale.max = max
-}
-
-function formatTimeTick(value: string | number, range: RangeKey, spanMs?: number) {
-  const time = typeof value === 'number' ? value : Number(value)
-  if (!Number.isFinite(time)) return ''
-  const span = spanMs ?? getDefaultZoomWindowMs(range)
-  if (span <= 36 * 60 * 60_000 || range === '24h') {
-    return TIME_FORMATTERS.hour.format(new Date(time))
-  }
-  if (span <= 21 * 24 * 60 * 60_000 || range === '7d') {
-    return TIME_FORMATTERS.day.format(new Date(time))
-  }
-  if (span <= 420 * 24 * 60 * 60_000) {
-    return TIME_FORMATTERS.month.format(new Date(time))
-  }
-  return TIME_FORMATTERS.year.format(new Date(time))
 }
