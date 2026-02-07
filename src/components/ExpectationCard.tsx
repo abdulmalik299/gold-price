@@ -5,8 +5,10 @@ import type { KaratKey, UnitKey } from '../lib/calc'
 import { priceForKarat } from '../lib/calc'
 import { formatMoney, parseLooseNumber } from '../lib/format'
 import { getJSON, setJSON } from '../lib/storage'
+import { useI18n } from '../lib/i18n'
 
 export default function ExpectationCard() {
+  const { t } = useI18n()
   const [ounceText, setOunceText] = React.useState(() => getJSON('expOunceText', ''))
   const [usdToIqdText, setUsdToIqdText] = React.useState(() => getJSON('expUsdToIqdText', ''))
   const [karat, setKarat] = React.useState<KaratKey>(() => getJSON('expKarat', '21k'))
@@ -28,29 +30,29 @@ export default function ExpectationCard() {
   return (
     <div className="card exp">
       <div className="cardTop">
-        <div className="cardTitle">Expectation</div>
-        <div className="pill subtle">What-if calculator</div>
+        <div className="cardTitle">{t('expectationTitle')}</div>
+        <div className="pill subtle">{t('whatIfCalculator')}</div>
       </div>
 
       <div className="grid2">
         <NumberInput
           id="expectation-ounce"
           name="expectationOunce"
-          label="Expected ounce price"
+          label={t('expectedOuncePrice')}
           value={ounceText}
           onChange={setOunceText}
-          placeholder="e.g. 4900.50"
-          hint="Write your expected XAU (USD per ounce)."
+          placeholder={t('placeholderExpectedOunce')}
+          hint={t('hintExpectedOunce')}
           suffix="$"
         />
         <NumberInput
           id="expectation-usd-to-iqd"
           name="expectationUsdToIqd"
-          label="USD → IQD"
+          label={t('usdToIqd')}
           value={usdToIqdText}
           onChange={setUsdToIqdText}
-          placeholder="e.g. 1500"
-          hint="If filled, result is IQD."
+          placeholder={t('placeholderUsdToIqd')}
+          hint={t('hintIfFilledResultIqd')}
           suffix="IQD"
         />
       </div>
@@ -68,8 +70,8 @@ export default function ExpectationCard() {
         />
         <Segmented
           items={[
-            { key: 'mithqal', label: 'Mithqal (5g)' },
-            { key: 'gram', label: 'Gram' },
+            { key: 'mithqal', label: t('mithqal') },
+            { key: 'gram', label: t('gram') },
           ]}
           value={unit}
           onChange={(v) => setUnit(v as UnitKey)}
@@ -83,19 +85,23 @@ export default function ExpectationCard() {
             : '—'}
         </div>
         <div className="mutedTiny">
-          {marginEnabled ? `Includes margin: ${marginIqd.toLocaleString('en-US')} IQD` : 'Add USD→IQD to enable IQD margin slider.'}
+          {marginEnabled
+            ? t('includesMargin', { value: marginIqd.toLocaleString('en-US') })
+            : t('addUsdToIqdEnableMargin')}
         </div>
       </div>
 
       <div className="sliderWrap">
         <div className="sliderTop">
-          <div className="sliderLabel">Expectation margin (IQD)</div>
-          <div className="sliderVal">{marginEnabled ? `${marginIqd.toLocaleString('en-US')} IQD` : 'Enable by entering USD→IQD'}</div>
+          <div className="sliderLabel">{t('expectationMargin')}</div>
+          <div className="sliderVal">
+            {marginEnabled ? `${marginIqd.toLocaleString('en-US')} IQD` : t('enableByEnteringUsdToIqd')}
+          </div>
         </div>
         <input
           id="expectation-margin-iqd"
           name="expectationMarginIqd"
-          aria-label="Expectation margin (IQD)"
+          aria-label={t('expectationMargin')}
           type="range"
           min={0}
           max={70000}

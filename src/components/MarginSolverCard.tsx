@@ -2,12 +2,14 @@ import React from 'react'
 import NumberInput from './NumberInput'
 import { priceForKarat } from '../lib/calc'
 import { formatMoney, parseLooseNumber } from '../lib/format'
+import { useI18n } from '../lib/i18n'
 
 export default function MarginSolverCard({
   onSolvedMargin,
 }: {
   onSolvedMargin: (marginIqd: number) => void
 }) {
+  const { t } = useI18n()
   const [ounceText, setOunceText] = React.useState('')
   const [usdToIqdText, setUsdToIqdText] = React.useState('')
   const [local21Text, setLocal21Text] = React.useState('')
@@ -29,45 +31,45 @@ export default function MarginSolverCard({
   return (
     <div className="card solver">
       <div className="cardTop">
-        <div className="cardTitle">Tax / Margin Solve</div>
-        <div className="pill subtle">Auto sync slider</div>
+        <div className="cardTitle">{t('taxMarginSolveTitle')}</div>
+        <div className="pill subtle">{t('autoSyncSlider')}</div>
       </div>
 
       <div className="grid2">
         <NumberInput
-          label="Local ounce price (USD)"
+          label={t('localOuncePriceUsd')}
           value={ounceText}
           onChange={setOunceText}
-          placeholder="e.g. 4900"
-          hint="The gold ounce price you saw locally."
+          placeholder={t('localOuncePlaceholder')}
+          hint={t('localOunceHint')}
           suffix="$"
         />
         <NumberInput
-          label="USD → IQD"
+          label={t('usdToIqd')}
           value={usdToIqdText}
           onChange={setUsdToIqdText}
-          placeholder="e.g. 1500"
-          hint="Dollar price in IQD."
+          placeholder={t('placeholderUsdToIqd')}
+          hint={t('usdToIqdHint')}
           suffix="IQD"
         />
       </div>
 
       <NumberInput
-        label="Local 21K per mithqal"
+        label={t('local21PerMithqal')}
         value={local21Text}
         onChange={setLocal21Text}
-        placeholder="e.g. 450,000"
-        hint="The 21k mithqal price you saw locally (IQD)."
+        placeholder={t('local21Placeholder')}
+        hint={t('local21Hint')}
         suffix="IQD"
       />
 
       <div className="solverOut">
         <div className="kv">
-          <div className="k">Theoretical 21K mithqal</div>
+          <div className="k">{t('theoretical21k')}</div>
           <div className="v">{theoretical == null ? '—' : formatMoney(theoretical, 'IQD', 0)}</div>
         </div>
         <div className="kv">
-          <div className="k">Margin result</div>
+          <div className="k">{t('marginResult')}</div>
           <div className="v">{margin == null ? '—' : formatMoney(margin, 'IQD', 0)}</div>
         </div>
 
@@ -78,11 +80,11 @@ export default function MarginSolverCard({
           onClick={() => onSolvedMargin(Math.max(0, margin ?? 0))}
         >
           <span className="btnGlow" />
-          Apply margin to main slider
+          {t('applyMarginMainSlider')}
         </button>
       </div>
 
-      <div className="mutedTiny">Calculates the margin for 21K mithqal based on your inputs and updates the main margin slider automatically..</div>
+      <div className="mutedTiny">{t('marginSolveNote')}</div>
     </div>
   )
 }

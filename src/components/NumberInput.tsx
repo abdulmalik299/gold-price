@@ -65,6 +65,7 @@ export default function NumberInput({
         name={inputName}
         className={`input ${invalid ? 'inputInvalid' : ''}`}
         inputMode="decimal"
+        dir="ltr"
         placeholder={placeholder}
         value={value}
         onChange={(e) => {
