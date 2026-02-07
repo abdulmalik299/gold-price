@@ -30,12 +30,32 @@ type ChartWithMeta = Chart & {
   $isRtl?: boolean
 }
 
-const TIME_FORMATTERS = {
-  hour: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }),
-  day: new Intl.DateTimeFormat(undefined, { weekday: 'short', day: '2-digit', month: 'short' }),
-  month: new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }),
-  year: new Intl.DateTimeFormat(undefined, { year: 'numeric' }),
-  dateTime: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+const TIME_FORMATTERS = new Map<string, ReturnType<typeof buildTimeFormatters>>()
+
+function buildTimeFormatters(locale?: string) {
+  return {
+    hour: new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }),
+    day: new Intl.DateTimeFormat(locale, { weekday: 'short', day: '2-digit', month: 'short' }),
+    month: new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }),
+    year: new Intl.DateTimeFormat(locale, { year: 'numeric' }),
+    dateLong: new Intl.DateTimeFormat(locale, { month: 'long', day: '2-digit', year: 'numeric' }),
+    dateTime: new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  }
+}
+
+function getTimeFormatters(locale?: string) {
+  const key = locale ?? 'default'
+  const existing = TIME_FORMATTERS.get(key)
+  if (existing) return existing
+  const next = buildTimeFormatters(locale)
+  TIME_FORMATTERS.set(key, next)
+  return next
 }
 
 // Crosshair (+ ruler) plugin
@@ -147,6 +167,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const chartRef = React.useRef<Chart | null>(null)
   const workerRef = React.useRef<Worker | null>(null)
   const [chartNow, setChartNow] = React.useState(() => new Date())
+  const langRef = React.useRef(lang)
 
   const [range, setRange] = React.useState<RangeKey>('24h')
   const rangeItems = React.useMemo(
@@ -182,6 +203,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const id = window.setInterval(() => setChartNow(new Date()), 1000)
     return () => window.clearInterval(id)
   }, [])
+
+  React.useEffect(() => {
+    langRef.current = lang
+  }, [lang])
 
 
   const setFollowLive = React.useCallback((next: boolean) => {
@@ -254,10 +279,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 if (!ctx[0]) return ''
                 const parsedX = ctx[0].parsed.x
                 if (parsedX == null) return ''
-                if (precisionModeRef.current) {
-                  return TIME_FORMATTERS.dateTime.format(new Date(parsedX))
-                }
-                return TIME_FORMATTERS.dateTime.format(new Date(parsedX))
+                const formatters = getTimeFormatters(langRef.current)
+                return formatters.dateTime.format(new Date(parsedX))
               },
               label: (ctx) => ` ${formatMoney(ctx.parsed.y, 'USD')}`,
             },
@@ -323,7 +346,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 const min = scale.min
                 const max = scale.max
                 const span = Number.isFinite(min) && Number.isFinite(max) ? max - min : null
-                return formatTimeTick(value, rangeRef.current, span ?? undefined)
+                return formatTimeTick(value, rangeRef.current, span ?? undefined, langRef.current)
               },
             },
           },
@@ -701,18 +724,20 @@ function setXScaleRange(chart: Chart, min: number, max: number) {
   xScale.max = max
 }
 
-function formatTimeTick(value: string | number, range: RangeKey, spanMs?: number) {
+function formatTimeTick(value: string | number, range: RangeKey, spanMs: number | undefined, locale?: string) {
   const time = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(time)) return ''
+  const formatters = getTimeFormatters(locale)
   const span = spanMs ?? getDefaultZoomWindowMs(range)
   if (span <= 36 * 60 * 60_000 || range === '24h') {
-    return TIME_FORMATTERS.hour.format(new Date(time))
+    const date = new Date(time)
+    return [formatters.hour.format(date), formatters.dateLong.format(date)]
   }
   if (span <= 21 * 24 * 60 * 60_000 || range === '7d') {
-    return TIME_FORMATTERS.day.format(new Date(time))
+    return formatters.day.format(new Date(time))
   }
   if (span <= 420 * 24 * 60 * 60_000) {
-    return TIME_FORMATTERS.month.format(new Date(time))
+    return formatters.month.format(new Date(time))
   }
-  return TIME_FORMATTERS.year.format(new Date(time))
+  return formatters.year.format(new Date(time))
 }

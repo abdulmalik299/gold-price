@@ -764,10 +764,25 @@ b{ color: rgba(255,255,255,0.92); }
       "right"
       "feedback";
   }
+  .app.rtl .layout{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "left"
+      "right"
+      "feedback";
+  }
   .gridTop{ grid-template-columns: 1fr; }
+  .app.rtl .gridTop{ grid-template-columns: 1fr; }
   .header{ flex-direction:column; align-items:stretch; }
   .headerRight{ width:100%; justify-content:flex-end; flex-wrap:wrap; }
   .chartWrap{ height: 320px; }
+  .app.rtl .header{ flex-direction: column; }
+  .app.rtl .headerRight{
+    margin-left: 0;
+    margin-right: 0;
+    justify-content: flex-start;
+  }
+  .app.rtl .brand{ text-align: right; }
 }
 
 /* Extra small phones */
