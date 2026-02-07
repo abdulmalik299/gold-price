@@ -594,10 +594,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
 
       <div className="chartWrap">
         <canvas ref={canvasRef} className="chartCanvas" />
-        <div className="priceRail">
-          <div className="priceRailTitle">Price</div>
-          <div className="priceRailHint">Scroll wheel here to zoom too.</div>
-        </div>
       </div>
 
       <div className="mutedTiny">
