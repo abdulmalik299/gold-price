@@ -27,6 +27,7 @@ type RangeKey = '24h' | '7d' | 'months' | 'years'
 type ChartWithMeta = Chart & {
   $precisionMode?: boolean
   $lastPrice?: { price: number; label: string } | null
+  $isRtl?: boolean
 }
 
 const TIME_FORMATTERS = {
@@ -107,7 +108,8 @@ const lastPricePlugin = {
     const textWidth = ctx.measureText(label).width
     const boxWidth = textWidth + paddingX * 2
     const boxHeight = 18
-    const boxX = chartArea.right - boxWidth - 6
+    const isRtl = Boolean(chart.$isRtl)
+    const boxX = isRtl ? chartArea.left + 6 : chartArea.right - boxWidth - 6
     const boxY = y - boxHeight / 2
 
     ctx.fillStyle = 'rgba(10, 12, 18, 0.75)'
@@ -120,7 +122,9 @@ const lastPricePlugin = {
 
     ctx.fillStyle = 'rgba(255, 243, 196, 0.9)'
     ctx.textBaseline = 'middle'
-    ctx.fillText(label, boxX + paddingX, boxY + boxHeight / 2)
+    ctx.textAlign = isRtl ? 'right' : 'left'
+    const textX = isRtl ? boxX + boxWidth - paddingX : boxX + paddingX
+    ctx.fillText(label, textX, boxY + boxHeight / 2)
     ctx.restore()
   },
 }
@@ -365,11 +369,12 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       const chartWithMeta = chartRef.current as ChartWithMeta
       chartWithMeta.$precisionMode = precisionModeRef.current
       chartWithMeta.$lastPrice = last ? { price: last.y, label: `${formatMoney(last.y, 'USD')}` } : null
+      chartWithMeta.$isRtl = lang !== 'en'
       applyDefaultZoom(chartRef.current)
       return
     }
 
-    const ch = chartRef.current
+    const ch = chartRef.current as ChartWithMeta
     const prevScale = ch.scales.x
     const prevMin = Number.isFinite(prevScale?.min) ? prevScale.min : null
     const prevMax = Number.isFinite(prevScale?.max) ? prevScale.max : null
@@ -395,13 +400,14 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     if (didRangeChange || isFollowingLiveRef.current) {
       applyDefaultZoom(ch)
     }
+    ch.$isRtl = lang !== 'en'
     if (last?.y != null) {
-      ;(ch as ChartWithMeta).$lastPrice = { price: last.y, label: `${formatMoney(last.y, 'USD')}` }
+      ch.$lastPrice = { price: last.y, label: `${formatMoney(last.y, 'USD')}` }
     } else {
-      ;(ch as ChartWithMeta).$lastPrice = null
+      ch.$lastPrice = null
     }
     ch.update()
-  }, [range, setFollowLive, setPanMode, t])
+  }, [lang, range, setFollowLive, setPanMode, t])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -424,6 +430,13 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     rangeRef.current = range
     setFollowLive(true)
   }, [range, setFollowLive])
+
+  React.useEffect(() => {
+    const chart = chartRef.current as ChartWithMeta | null
+    if (!chart) return
+    chart.$isRtl = lang !== 'en'
+    chart.update('none')
+  }, [lang])
 
   // Refresh chart when a new live price arrives: fetch minimal newest ticks
   React.useEffect(() => {
