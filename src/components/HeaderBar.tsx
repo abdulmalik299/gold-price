@@ -26,29 +26,33 @@ export default function HeaderBar({
         <div>
           <div className="brandTitleRow">
             <div className="brandTitle">Live Gold Monitor</div>
-            <button type="button" className="infoBtn" onClick={onInfo} aria-label="Open user notice">
-              ⓘ
-            </button>
+            <div className="infoCluster">
+              <button type="button" className="infoBtn" onClick={onInfo} aria-label="Open tutorial video notice">
+                <span className="infoIcon" aria-hidden="true">
+                  ⓘ
+                </span>
+                <span className="infoText">Tutorial Video</span>
+              </button>
+              {canInstall && (
+                <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
+                  Install app
+                  <span className="btnGlow" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="brandSub">Live Gold Monitor & Tools</div>
         </div>
       </div>
 
       <div className="headerRight">
-        {canInstall && (
-          <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
-            Install app
-            <span className="btnGlow" />
-          </button>
-        )}
-        
         <div className="clockCard">
           <div className="clock">{clock}</div>
           <div className="clockSub">{nowLocalTimeString()}</div>
         </div>
 
         <div className="updateCard">
-          <div className="updateTitle">Last price update</div>
+          <div className="updateTitle">Local price update</div>
           <div className="updateValue">
             {lastPriceUpdateAt ? new Date(lastPriceUpdateAt).toLocaleString() : '—'}
           </div>
