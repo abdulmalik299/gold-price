@@ -146,6 +146,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
   const chartRef = React.useRef<Chart | null>(null)
   const workerRef = React.useRef<Worker | null>(null)
+  const [chartNow, setChartNow] = React.useState(() => new Date())
 
   const [range, setRange] = React.useState<RangeKey>('24h')
   const [loading, setLoading] = React.useState(false)
@@ -166,6 +167,11 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const zoomOptions = chart.options.plugins?.zoom
     if (!zoomOptions?.pan) return
     zoomOptions.pan.mode = mode
+  }, [])
+
+  React.useEffect(() => {
+    const id = window.setInterval(() => setChartNow(new Date()), 1000)
+    return () => window.clearInterval(id)
   }, [])
 
 
@@ -596,8 +602,13 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         <canvas ref={canvasRef} className="chartCanvas" />
       </div>
 
-      <div className="mutedTiny">
-        
+      <div className="chartFooter">
+        <div className="chartClock">
+          {chartNow.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        </div>
+        <div className="chartDate">
+          {chartNow.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })}
+        </div>
       </div>
     </div>
   )

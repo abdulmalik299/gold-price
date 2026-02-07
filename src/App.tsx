@@ -25,6 +25,7 @@ type BeforeInstallPromptEvent = Event & {
 }
 
 const VIDEO_SRC = `${import.meta.env.BASE_URL}media/tutorial.mp4`
+const VIDEO_THUMB = `${import.meta.env.BASE_URL}media/thumbnail.png`
 
 function formatAge(ms: number) {
   if (ms < 0) ms = 0
@@ -295,27 +296,56 @@ export default function App() {
 function NoticeVideo() {
   const videoRef = React.useRef<HTMLVideoElement | null>(null)
   const [ended, setEnded] = React.useState(false)
+  const [hasStarted, setHasStarted] = React.useState(false)
 
   const handleReplay = () => {
     if (!videoRef.current) return
     videoRef.current.currentTime = 0
     void videoRef.current.play()
+    setHasStarted(true)
     setEnded(false)
+  }
+
+  const handlePlay = () => {
+    if (!videoRef.current) return
+    setHasStarted(true)
+    void videoRef.current.play()
   }
 
   return (
     <div className="noticeVideo">
-      <video
-        ref={videoRef}
-        className="noticeVideoPlayer"
-        controls
-        preload="metadata"
-        onEnded={() => setEnded(true)}
-        onPlay={() => setEnded(false)}
-      >
-        <source src={VIDEO_SRC} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      <div className="noticeVideoFrame">
+        <video
+          ref={videoRef}
+          className="noticeVideoPlayer"
+          controls
+          preload="metadata"
+          poster={VIDEO_THUMB}
+          onEnded={() => setEnded(true)}
+          onPlay={() => {
+            setEnded(false)
+            setHasStarted(true)
+          }}
+        >
+          <source src={VIDEO_SRC} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        {!hasStarted && (
+          <button
+            type="button"
+            className="noticeVideoOverlay"
+            onClick={handlePlay}
+            aria-label="Play tutorial video"
+            style={{ backgroundImage: `url(${VIDEO_THUMB})` }}
+          >
+            <span className="noticePlayButton" aria-hidden="true">
+              <svg viewBox="0 0 64 64" role="presentation" focusable="false">
+                <path d="M24 18.5v27l23-13.5-23-13.5z" />
+              </svg>
+            </span>
+          </button>
+        )}
+      </div>
       {ended && (
         <button type="button" className="btn noticeReplay" onClick={handleReplay}>
           Watch again
