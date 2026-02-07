@@ -5,10 +5,12 @@ export default function HeaderBar({
   lastPriceUpdateAt,
   canInstall,
   onInstall,
+  onInfo,
 }: {
   lastPriceUpdateAt: number | null
   canInstall: boolean
   onInstall: () => void
+  onInfo: () => void
 }) {
   const [clock, setClock] = React.useState(hhmmss())
   
@@ -22,7 +24,12 @@ export default function HeaderBar({
       <div className="brand">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
         <div>
-          <div className="brandTitle">Live Gold Monitor</div>
+          <div className="brandTitleRow">
+            <div className="brandTitle">Live Gold Monitor</div>
+            <button type="button" className="infoBtn" onClick={onInfo} aria-label="Open user notice">
+              ⓘ
+            </button>
+          </div>
           <div className="brandSub">Live Gold Monitor & Tools</div>
         </div>
       </div>
