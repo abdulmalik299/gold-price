@@ -1,5 +1,6 @@
 import React from 'react'
 import { hhmmss, nowLocalTimeString } from '../lib/format'
+import { LANGUAGE_OPTIONS, type Language, useI18n } from '../lib/i18n'
 
 export default function HeaderBar({
   lastPriceUpdateAt,
@@ -13,6 +14,7 @@ export default function HeaderBar({
   onInfo: () => void
 }) {
   const [clock, setClock] = React.useState(hhmmss())
+  const { lang, setLanguage, t } = useI18n()
   
   React.useEffect(() => {
     const id = window.setInterval(() => setClock(hhmmss()), 1000)
@@ -25,23 +27,38 @@ export default function HeaderBar({
         <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
         <div>
           <div className="brandTitleRow">
-            <div className="brandTitle">Live Gold Monitor</div>
+            <div className="brandTitle">{t('brandTitle')}</div>
             <div className="infoCluster">
-              <button type="button" className="infoBtn" onClick={onInfo} aria-label="Open tutorial video notice">
+              <button type="button" className="infoBtn" onClick={onInfo} aria-label={t('openTutorialAria')}>
                 <span className="infoIcon" aria-hidden="true">
                   ⓘ
                 </span>
-                <span className="infoText">Tutorial Video</span>
+                <span className="infoText">{t('tutorialVideo')}</span>
               </button>
               {canInstall && (
                 <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
-                  Install app
+                  {t('installApp')}
                   <span className="btnGlow" />
                 </button>
               )}
+              <div className="langSelectWrap">
+                <span className="langLabel">{t('languageLabel')}</span>
+                <select
+                  className="langSelect"
+                  value={lang}
+                  onChange={(event) => setLanguage(event.target.value as Language)}
+                  aria-label={t('languageLabel')}
+                >
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-          <div className="brandSub">Live Gold Monitor & Tools</div>
+          <div className="brandSub">{t('brandSub')}</div>
         </div>
       </div>
 
@@ -52,7 +69,7 @@ export default function HeaderBar({
         </div>
 
         <div className="updateCard">
-          <div className="updateTitle">Local price update</div>
+          <div className="updateTitle">{t('localPriceUpdate')}</div>
           <div className="updateValue">
             {lastPriceUpdateAt ? new Date(lastPriceUpdateAt).toLocaleString() : '—'}
           </div>

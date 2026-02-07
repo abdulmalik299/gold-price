@@ -2,13 +2,14 @@ import React from 'react'
 import { sampleNetwork, type NetStatus } from '../lib/net'
 import { formatWithCommas } from '../lib/format'
 import { useInterval } from '../hooks/useInterval'
+import { useI18n, type Translate } from '../lib/i18n'
 
-function labelForKBps(kbps: number | null) {
+function labelForKBps(kbps: number | null, t: Translate) {
   if (kbps == null) return '—'
-  if (kbps < 300) return 'Very Low'
-  if (kbps < 1500) return 'Low'
-  if (kbps < 8000) return 'Good'
-  return 'Strong'
+  if (kbps < 300) return t('qualityVeryLow')
+  if (kbps < 1500) return t('qualityLow')
+  if (kbps < 8000) return t('qualityGood')
+  return t('qualityStrong')
 }
 
 function formatDownloadSpeed(kbPerSecond: number | null) {
@@ -20,6 +21,7 @@ function formatDownloadSpeed(kbPerSecond: number | null) {
 }
 
 export default function ConnectionStatus() {
+  const { t } = useI18n()
   const [s, setS] = React.useState<NetStatus>({ online: navigator.onLine, rttMs: null, downKBps: null, at: Date.now() })
 
   const refresh = React.useCallback(async () => {
@@ -47,33 +49,33 @@ export default function ConnectionStatus() {
   return (
     <div className="card conn">
       <div className="cardTop">
-        <div className="cardTitle">Connection</div>
+        <div className="cardTitle">{t('connectionTitle')}</div>
         <div className={`pill ${tone}`}>
           <span className="dot" />
-          {s.online ? 'Online' : 'Offline'}
+          {s.online ? t('online') : t('offline')}
         </div>
       </div>
 
       <div className="connGrid">
         <div className="kv">
-          <div className="k">Latency</div>
+          <div className="k">{t('latency')}</div>
           <div className="v">{ms}</div>
         </div>
         <div className="kv">
-          <div className="k">Download</div>
+          <div className="k">{t('download')}</div>
           <div className="v">{downloadSpeed}</div>
         </div>
         <div className="kv">
-          <div className="k">Quality</div>
-          <div className="v">{labelForKBps(s.downKBps)}</div>
+          <div className="k">{t('quality')}</div>
+          <div className="v">{labelForKBps(s.downKBps, t)}</div>
         </div>
         <button className="btn" type="button" onClick={refresh}>
           <span className="btnGlow" />
-          Recheck
+          {t('recheck')}
         </button>
       </div>
 
-      <div className="mutedTiny">Note: If your internet connection is slow or offline, price updates may be delayed. Live prices are fetched automatically from our data provider..</div>
+      <div className="mutedTiny">{t('connectionNote')}</div>
     </div>
   )
 }

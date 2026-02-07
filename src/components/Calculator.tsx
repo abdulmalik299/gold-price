@@ -1,11 +1,13 @@
 import React from 'react'
 import { formatWithCommas } from '../lib/format'
 import { getJSON, setJSON } from '../lib/storage'
+import { useI18n } from '../lib/i18n'
 
 type HistItem = { expr: string; result: string; at: number }
 
 const OPS = new Set(['+', '−', '×', '÷'])
 const PREC: Record<string, number> = { '+': 1, '−': 1, '×': 2, '÷': 2 }
+const CALC_ERROR = '__ERROR__'
 const isDigit = (ch: string) => /\d/.test(ch)
 function countUnclosedParens(value: string) {
   let count = 0
@@ -70,7 +72,7 @@ function evalRpn(rpn: string[]): number {
 }
 
 function formatResult(n: number) {
-  if (!Number.isFinite(n)) return 'Error'
+  if (!Number.isFinite(n)) return CALC_ERROR
   // Keep up to 10 decimals but trim trailing zeros.
   const s = n.toFixed(10).replace(/\.0+$|(?<=\..*?)0+$/g, '')
   const parts = s.split('.')
@@ -80,6 +82,7 @@ function formatResult(n: number) {
 }
 
 export default function Calculator() {
+  const { t } = useI18n()
   const [expr, setExpr] = React.useState<string>(() => getJSON('calcExpr', ''))
   const [preview, setPreview] = React.useState<string>('0')
   const [hist, setHist] = React.useState<HistItem[]>(() => getJSON('calcHist', []))
@@ -96,7 +99,7 @@ export default function Calculator() {
       const val = evalRpn(rpn)
       setPreview(formatResult(val))
     } catch {
-      setPreview('Error')
+      setPreview(CALC_ERROR)
     }
   }, [expr])
 
@@ -136,7 +139,7 @@ export default function Calculator() {
       const res = formatResult(val)
       const next: HistItem = { expr: expr || '0', result: res, at: Date.now() }
       setHist((h) => [next, ...h].slice(0, 60))
-      setExpr(res === 'Error' ? '' : res)
+      setExpr(res === CALC_ERROR ? '' : res)
     } catch {
       setExpr('')
     }
@@ -151,11 +154,11 @@ export default function Calculator() {
   return (
     <div className="card calc">
       <div className="cardTop">
-        <div className="cardTitle">Advanced Calculator</div>
+        <div className="cardTitle">{t('advancedCalculator')}</div>
         <div className="inlineRight">
           <button className="chip" type="button" onClick={() => setShowHist((s) => !s)}>
             <span className="chipGlow" />
-            {showHist ? 'Hide history' : 'Show history'}
+            {showHist ? t('hideHistory') : t('showHistory')}
           </button>
         </div>
       </div>
@@ -163,7 +166,7 @@ export default function Calculator() {
       <div className="calcBody">
         <div className="calcDisplay" onKeyDown={key} tabIndex={0}>
           <div className="calcExpr">{expr || '0'}</div>
-          <div className="calcPreview">{preview}</div>
+          <div className="calcPreview">{preview === CALC_ERROR ? t('calcError') : preview}</div>
         </div>
 
         <div className="calcGrid">
@@ -196,23 +199,23 @@ export default function Calculator() {
         {showHist ? (
           <div className="calcHist">
             <div className="calcHistTop">
-              <div className="calcHistTitle">History</div>
+              <div className="calcHistTitle">{t('history')}</div>
               <button className="chip" type="button" onClick={() => setHist([])}>
                 <span className="chipGlow" />
-                Clear
+                {t('clear')}
               </button>
             </div>
-            {hist.length === 0 ? <div className="mutedTiny">No history yet.</div> : null}
+            {hist.length === 0 ? <div className="mutedTiny">{t('noHistoryYet')}</div> : null}
             <div className="calcHistList">
               {hist.map((h) => (
                 <button
                   key={h.at}
                   type="button"
                   className="histRow"
-                  onClick={() => setExpr(h.result === 'Error' ? '' : h.result)}
+                  onClick={() => setExpr(h.result === CALC_ERROR ? '' : h.result)}
                 >
                   <div className="histExpr">{h.expr}</div>
-                  <div className="histRes">{h.result}</div>
+                  <div className="histRes">{h.result === CALC_ERROR ? t('calcError') : h.result}</div>
                 </button>
               ))}
             </div>
@@ -221,7 +224,7 @@ export default function Calculator() {
       </div>
 
       <div className="mutedTiny">
-         <b>÷</b>.
+        {t('calcTipDivide')}
       </div>
     </div>
   )
