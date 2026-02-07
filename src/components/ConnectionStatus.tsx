@@ -2,6 +2,7 @@ import React from 'react'
 import { sampleNetwork, type NetStatus } from '../lib/net'
 import { formatWithCommas } from '../lib/format'
 import { useInterval } from '../hooks/useInterval'
+import { useI18n } from '../lib/i18n'
 
 function labelForKBps(kbps: number | null) {
   if (kbps == null) return '—'
@@ -20,6 +21,7 @@ function formatDownloadSpeed(kbPerSecond: number | null) {
 }
 
 export default function ConnectionStatus() {
+  const { t } = useI18n()
   const [s, setS] = React.useState<NetStatus>({ online: navigator.onLine, rttMs: null, downKBps: null, at: Date.now() })
 
   const refresh = React.useCallback(async () => {
@@ -73,7 +75,7 @@ export default function ConnectionStatus() {
         </button>
       </div>
 
-      <div className="mutedTiny">Note: If your internet connection is slow or offline, price updates may be delayed. Live prices are fetched automatically from our data provider..</div>
+      <div className="mutedTiny">{t('connectionNote')}</div>
     </div>
   )
 }

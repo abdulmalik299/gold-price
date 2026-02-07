@@ -4,6 +4,7 @@ import NumberInput from './NumberInput'
 import { KaratKey, UnitKey, deltaAndPercent, priceForKarat } from '../lib/calc'
 import { arrowForDelta, formatMoney, formatPercent, parseLooseNumber } from '../lib/format'
 import { getJSON, setJSON } from '../lib/storage'
+import { useI18n } from '../lib/i18n'
 
 const KARATS: KaratKey[] = ['24k', '22k', '21k', '18k']
 
@@ -15,6 +16,7 @@ type Props = {
 }
 
 export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, externalMarginIqd }: Props) {
+  const { t } = useI18n()
   const [usdToIqdText, setUsdToIqdText] = React.useState(() => getJSON('usdToIqdText', ''))
   const [unit, setUnit] = React.useState<UnitKey>(() => getJSON('unit', 'mithqal'))
   const [marginIqd, setMarginIqd] = React.useState<number>(() => getJSON('marginIqd', 0))
@@ -43,12 +45,12 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
   return (
     <div className="card karats">
       <div className="cardTop">
-        <div className="cardTitle">Karats</div>
+        <div className="cardTitle">{t('karatsTitle')}</div>
         <div className="inlineRight">
           <Segmented
             items={[
-              { key: 'mithqal', label: 'Mithqal (5g)' },
-              { key: 'gram', label: 'Gram' },
+              { key: 'mithqal', label: t('mithqal') },
+              { key: 'gram', label: t('gram') },
             ]}
             value={unit}
             onChange={(v) => setUnit(v)}
@@ -60,11 +62,11 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
         <NumberInput
           id="karats-usd-to-iqd"
           name="karatsUsdToIqd"
-          label="USD → IQD"
+          label={t('usdToIqd')}
           value={usdToIqdText}
           onChange={setUsdToIqdText}
-          placeholder="Leave empty for USD"
-          hint="Enter a value to convert karat prices to IQD. The live ounce price remains in USD."
+          placeholder={t('leaveEmptyForUsd')}
+          hint={t('karatsHint')}
           suffix={marginEnabled ? 'IQD' : '$'}
         />
       </div>
@@ -106,7 +108,7 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
                     <span>{formatPercent(pct)}</span>
                   </div>
                 ) : (
-                  <div className="mutedTiny">waiting…</div>
+                  <div className="mutedTiny">{t('waiting')}</div>
                 )}
               </div>
             </div>
@@ -116,16 +118,16 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
 
       <div className="sliderWrap">
         <div className="sliderTop">
-          <div className="sliderLabel">Margin / Tax (IQD)</div>
+          <div className="sliderLabel">{t('marginTax')}</div>
           <div className="sliderVal">
-            {marginEnabled ? `${marginIqd.toLocaleString('en-US')} IQD` : 'Enable by entering USD→IQD'}
+            {marginEnabled ? `${marginIqd.toLocaleString('en-US')} IQD` : t('enableByEnteringUsdToIqd')}
           </div>
         </div>
 
         <input
           id="karat-margin-iqd"
           name="karatMarginIqd"
-          aria-label="Margin / Tax (IQD)"
+          aria-label={t('marginTax')}
           type="range"
           min={0}
           max={70000}
@@ -136,7 +138,7 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
           className="slider"
         />
 
-        <div className="mutedTiny">Slider works for IQD-only karat prices. Ounce is unaffected.</div>
+        <div className="mutedTiny">{t('sliderWorksNote')}</div>
       </div>
     </div>
   )

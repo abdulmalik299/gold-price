@@ -75,6 +75,27 @@ body::before{
 .infoCluster{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .brandTitle{ font-weight: 850; letter-spacing:0.2px; font-size: 18px; }
 .brandSub{ color: var(--muted2); font-size: 12px; margin-top: 2px; }
+.langSelectWrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.18);
+}
+.langLabel{ font-size: 11px; color: var(--muted); letter-spacing: 0.02em; }
+.langSelect{
+  background: rgba(0,0,0,0.35);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  appearance: none;
+}
+.langSelect:focus{ outline: 2px solid rgba(247,215,122,0.4); outline-offset: 2px; }
 .infoBtn{
   border-radius: 999px;
   border: 1px solid rgba(247,215,122,0.35);
@@ -119,6 +140,42 @@ body::before{
     grid-template-areas:
     "left right"
     "feedback right";
+}
+
+.app.rtl{
+  direction: rtl;
+  text-align: right;
+}
+
+.app.rtl .langSelectWrap{
+  flex-direction: row-reverse;
+}
+
+.app.rtl .brand{
+  order: 2;
+  text-align: left;
+}
+
+.app.rtl .headerRight{
+  order: 1;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.app.rtl .layout{
+  grid-template-columns: 1fr 1.7fr;
+  grid-template-areas:
+    "right left"
+    "right feedback";
+}
+
+.app.rtl .gridTop{
+  grid-template-columns: 1fr 1.1fr;
+}
+
+.app.rtl .calcGrid,
+.app.rtl .calcDisplay{
+  direction: ltr;
 }
 
 .leftCol{ display:flex; flex-direction:column; gap: 16px; grid-area:left; }

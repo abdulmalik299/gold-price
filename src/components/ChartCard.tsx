@@ -1,6 +1,7 @@
 import React from 'react'
 import { fetchTicks, type GoldTick } from '../lib/supabase'
 import { formatMoney } from '../lib/format'
+import { useI18n } from '../lib/i18n'
 
 import {
   Chart as ChartJS,
@@ -22,12 +23,6 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 ChartJS.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Tooltip, Filler, Legend, zoomPlugin)
 
 type RangeKey = '24h' | '7d' | 'months' | 'years'
-const RANGE_ITEMS: { key: RangeKey; label: string }[] = [
-  { key: '24h', label: '24H' },
-  { key: '7d', label: '7 Days' },
-  { key: 'months', label: 'Months' },
-  { key: 'years', label: 'Years' },
-]
 
 type ChartWithMeta = Chart & {
   $precisionMode?: boolean
@@ -112,7 +107,8 @@ const lastPricePlugin = {
     const textWidth = ctx.measureText(label).width
     const boxWidth = textWidth + paddingX * 2
     const boxHeight = 18
-    const boxX = chartArea.right - boxWidth - 6
+    const isRtl = document.documentElement.dir === 'rtl'
+    const boxX = isRtl ? chartArea.left + 6 : chartArea.right - boxWidth - 6
     const boxY = y - boxHeight / 2
 
     ctx.fillStyle = 'rgba(10, 12, 18, 0.75)'
@@ -125,6 +121,7 @@ const lastPricePlugin = {
 
     ctx.fillStyle = 'rgba(255, 243, 196, 0.9)'
     ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
     ctx.fillText(label, boxX + paddingX, boxY + boxHeight / 2)
     ctx.restore()
   },
@@ -143,12 +140,22 @@ function buildGradient(ctx: CanvasRenderingContext2D, chart: Chart) {
 }
 
 export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | null }) {
+  const { t, lang } = useI18n()
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
   const chartRef = React.useRef<Chart | null>(null)
   const workerRef = React.useRef<Worker | null>(null)
   const [chartNow, setChartNow] = React.useState(() => new Date())
 
   const [range, setRange] = React.useState<RangeKey>('24h')
+  const rangeItems = React.useMemo(
+    () => [
+      { key: '24h', label: t('range24h') },
+      { key: '7d', label: t('range7d') },
+      { key: 'months', label: t('rangeMonths') },
+      { key: 'years', label: t('rangeYears') },
+    ] as const,
+    [t]
+  )
   const [loading, setLoading] = React.useState(false)
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
@@ -330,7 +337,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         data: {
           datasets: [
             {
-              label: 'Gold',
+              label: t('goldLabel'),
               data,
               parsing: false,
               borderWidth: 2,
@@ -342,7 +349,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               backgroundColor: (c) => buildGradient(c.chart.ctx, c.chart),
             },
             {
-              label: 'No price change > 5 min',
+              label: t('staleLabel'),
               data: staleOverlayData,
               parsing: false,
               borderWidth: 6,
@@ -396,7 +403,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ;(ch as ChartWithMeta).$lastPrice = null
     }
     ch.update()
-  }, [range, setFollowLive, setPanMode])
+  }, [range, setFollowLive, setPanMode, t])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -405,11 +412,11 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       const ticks = await fetchTicks(range)
       await setData(ticks)
     } catch (e: any) {
-      setErr(e?.message ?? 'Failed to load history')
+      setErr(e?.message ?? t('failedToLoadHistory'))
     } finally {
       setLoading(false)
     }
-  }, [range, setData])
+  }, [range, setData, t])
 
   React.useEffect(() => {
     load()
@@ -448,6 +455,13 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       workerRef.current = null
     }
   }, [])
+
+  React.useEffect(() => {
+    if (!chartRef.current) return
+    chartRef.current.data.datasets[0].label = t('goldLabel')
+    chartRef.current.data.datasets[1].label = t('staleLabel')
+    chartRef.current.update('none')
+  }, [t])
 
   React.useEffect(() => {
     const canvas = canvasRef.current
@@ -561,10 +575,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   return (
     <div className="card chart">
       <div className="cardTop">
-        <div className="cardTitle">History Chart</div>
+        <div className="cardTitle">{t('historyChartTitle')}</div>
         <div className="inlineRight chartControls">
           <div className="rangeBtns">
-            {RANGE_ITEMS.map((it) => (
+            {rangeItems.map((it) => (
               <button
                 key={it.key}
                 type="button"
@@ -579,22 +593,31 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
           {!isFollowingLive && (
             <button type="button" className="chip chipLive" onClick={handleBackToLive}>
               <span className="chipGlow" />
-              Back to Live
+              {t('backToLive')}
             </button>
           )}
           <button type="button" className="chip" onClick={resetZoom}>
             <span className="chipGlow" />
-            Reset zoom
+            {t('resetZoom')}
           </button>
         </div>
       </div>
 
       <div className="chartMeta">
         <div className="pill subtle">
-          {loading ? 'Loading…' : err ? `Error: ${err}` : lastPoint ? `Last: ${formatMoney(lastPoint.price, 'USD')} @ ${new Date(lastPoint.ts).toLocaleString()}` : 'No data yet'}
+          {loading
+            ? t('loading')
+            : err
+              ? t('errorPrefix', { message: err })
+              : lastPoint
+                ? t('lastLabel', {
+                  price: formatMoney(lastPoint.price, 'USD'),
+                  time: new Date(lastPoint.ts).toLocaleString(lang),
+                })
+                : t('noDataYet')}
         </div>
         <div className="mutedTiny">
-          Desktop: wheel zooms, left-drag pans (x-axis), middle-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.
+          {t('chartHelp')}
         </div>
       </div>
 
@@ -604,10 +627,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
 
       <div className="chartFooter">
         <div className="chartClock">
-          {chartNow.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          {chartNow.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div>
         <div className="chartDate">
-          {chartNow.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })}
+          {chartNow.toLocaleDateString(lang, { month: 'long', day: '2-digit', year: 'numeric' })}
         </div>
       </div>
     </div>

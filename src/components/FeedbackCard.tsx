@@ -1,5 +1,6 @@
 import React from 'react'
 import { FORMSPREE_ENDPOINT } from '../env'
+import { useI18n } from '../lib/i18n'
 
 type Status = 'idle' | 'sending' | 'success' | 'error'
 
@@ -11,6 +12,7 @@ type FieldErrors = {
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function FeedbackCard() {
+  const { t } = useI18n()
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [message, setMessage] = React.useState('')
@@ -22,10 +24,10 @@ export default function FeedbackCard() {
   const validate = () => {
     const nextErrors: FieldErrors = {}
     if (!message.trim()) {
-      nextErrors.message = 'Message is required.'
+      nextErrors.message = t('messageRequired')
     }
     if (email.trim() && !emailPattern.test(email.trim())) {
-      nextErrors.email = 'Enter a valid email address.'
+      nextErrors.email = t('emailInvalid')
     }
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -39,13 +41,13 @@ export default function FeedbackCard() {
 
     if (!validate()) {
       setStatus('error')
-      setStatusMessage('Please fix the highlighted fields.')
+      setStatusMessage(t('fixHighlightedFields'))
       return
     }
 
     if (honeypot) {
       setStatus('success')
-      setStatusMessage('Sent. Thank you!')
+      setStatusMessage(t('sentThankYou'))
       setName('')
       setEmail('')
       setMessage('')
@@ -70,20 +72,20 @@ export default function FeedbackCard() {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Submission failed.')
-      }
+    if (!response.ok) {
+      throw new Error('Submission failed.')
+    }
 
-      setStatus('success')
-      setStatusMessage('Sent. Thank you!')
-      setName('')
+    setStatus('success')
+    setStatusMessage(t('sentThankYou'))
+    setName('')
       setEmail('')
       setMessage('')
       setErrors({})
-    } catch {
-      setStatus('error')
-      setStatusMessage('Unable to send right now. Please try again.')
-    }
+  } catch {
+    setStatus('error')
+    setStatusMessage(t('unableToSend'))
+  }
   }
 
   const isSending = status === 'sending'
@@ -92,15 +94,15 @@ export default function FeedbackCard() {
     <section className="card feedbackCard" aria-labelledby="feedback-title">
       <div className="cardTop">
         <div>
-          <div className="cardTitle" id="feedback-title">Feedback / Suggestions</div>
-          <div className="feedbackSub">Share ideas or report issues</div>
+          <div className="cardTitle" id="feedback-title">{t('feedbackTitle')}</div>
+          <div className="feedbackSub">{t('feedbackSub')}</div>
         </div>
       </div>
 
       <form className="feedbackForm" onSubmit={handleSubmit} noValidate>
         <div className="feedbackFields">
           <div className="field">
-            <label className="fieldLabel" htmlFor="feedback-name">Name (optional)</label>
+            <label className="fieldLabel" htmlFor="feedback-name">{t('nameOptional')}</label>
             <input
               id="feedback-name"
               name="name"
@@ -113,7 +115,7 @@ export default function FeedbackCard() {
           </div>
 
           <div className="field">
-            <label className="fieldLabel" htmlFor="feedback-email">Email (optional)</label>
+            <label className="fieldLabel" htmlFor="feedback-email">{t('emailOptional')}</label>
             <input
               id="feedback-email"
               name="email"
@@ -132,7 +134,7 @@ export default function FeedbackCard() {
           </div>
 
           <div className="field feedbackMessage">
-            <label className="fieldLabel" htmlFor="feedback-message">Message *</label>
+            <label className="fieldLabel" htmlFor="feedback-message">{t('messageLabel')}</label>
             <textarea
               id="feedback-message"
               name="message"
@@ -151,7 +153,7 @@ export default function FeedbackCard() {
         </div>
 
         <div className="feedbackHoneypot" aria-hidden="true">
-          <label htmlFor="feedback-website">Website</label>
+          <label htmlFor="feedback-website">{t('feedbackWebsiteLabel')}</label>
           <input
             id="feedback-website"
             name="_gotcha"
@@ -166,7 +168,7 @@ export default function FeedbackCard() {
         <div className="feedbackActions">
           <button className="btn btnGold" type="submit" disabled={isSending}>
             <span className="btnGlow" />
-            {isSending ? 'Sending...' : 'Send feedback'}
+            {isSending ? t('sending') : t('sendFeedback')}
           </button>
           <span className={`feedbackStatus feedbackStatus-${status}`} role="status" aria-live="polite">
             {statusMessage}
