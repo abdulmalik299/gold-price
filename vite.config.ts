@@ -41,6 +41,15 @@ export default defineConfig({
             urlPattern: ({ url }) => url.origin === 'https://api.gold-api.com',
             handler: 'NetworkFirst',
             options: { cacheName: 'gold-api', networkTimeoutSeconds: 6 }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.endsWith('/media/tutorial.mp4'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'tutorial-video',
+              cacheableResponse: { statuses: [200, 206] },
+              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 365 }
+            }
           }
         ]
       }
