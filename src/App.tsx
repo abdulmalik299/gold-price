@@ -25,6 +25,7 @@ type BeforeInstallPromptEvent = Event & {
 }
 
 const VIDEO_SRC = `${import.meta.env.BASE_URL}media/tutorial.mp4`
+const VIDEO_CACHE_NAME = 'tutorial-video-cache'
 const VIDEO_THUMB = `${import.meta.env.BASE_URL}media/thumbnail.png`
 
 function formatAge(ms: number) {
@@ -295,8 +296,21 @@ export default function App() {
 
 function NoticeVideo() {
   const videoRef = React.useRef<HTMLVideoElement | null>(null)
+  const hasCachedRef = React.useRef(false)
   const [ended, setEnded] = React.useState(false)
   const [hasStarted, setHasStarted] = React.useState(false)
+
+  const ensureVideoCached = React.useCallback(async () => {
+    if (hasCachedRef.current || !('caches' in window)) return
+    hasCachedRef.current = true
+    const cache = await caches.open(VIDEO_CACHE_NAME)
+    const existing = await cache.match(VIDEO_SRC)
+    if (existing) return
+    const response = await fetch(VIDEO_SRC, { cache: 'no-store' })
+    if (response.ok) {
+      await cache.put(VIDEO_SRC, response)
+    }
+  }, [])
 
   const handleReplay = () => {
     if (!videoRef.current) return
@@ -309,6 +323,7 @@ function NoticeVideo() {
   const handlePlay = () => {
     if (!videoRef.current) return
     setHasStarted(true)
+    void ensureVideoCached()
     void videoRef.current.play()
   }
 
@@ -325,6 +340,7 @@ function NoticeVideo() {
           onPlay={() => {
             setEnded(false)
             setHasStarted(true)
+            void ensureVideoCached()
           }}
         >
           <source src={VIDEO_SRC} type="video/mp4" />
