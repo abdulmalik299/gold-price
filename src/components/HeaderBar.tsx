@@ -1,5 +1,5 @@
 import React from 'react'
-import { hhmmss, nowLocalTimeString } from '../lib/format'
+import { hhmmss, nowLocalDateString } from '../lib/format'
 import { LANGUAGE_OPTIONS, type Language, useI18n } from '../lib/i18n'
 
 export default function HeaderBar({
@@ -34,29 +34,6 @@ export default function HeaderBar({
       </div>
 
       <div className="headerRight">
-        <div className="headerActions">
-          <button type="button" className="infoBtn" onClick={onInfo} aria-label={t('openTutorialAria')}>
-            <span className="infoIcon" aria-hidden="true">
-              ⓘ
-            </span>
-            <span className="infoText">{t('tutorialVideo')}</span>
-          </button>
-          <div className="langSelectWrap">
-            <span className="langLabel">{t('languageLabel')}</span>
-            <select
-              className="langSelect"
-              value={lang}
-              onChange={(event) => setLanguage(event.target.value as Language)}
-              aria-label={t('languageLabel')}
-            >
-              {LANGUAGE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
         {canInstall && (
           <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
             {t('installApp')}
@@ -65,7 +42,24 @@ export default function HeaderBar({
         )}
         <div className="clockCard">
           <div className="clock">{clock}</div>
-          <div className="clockSub">{nowLocalTimeString()}</div>
+          <div className="clockSub">{nowLocalDateString()}</div>
+          <div className="clockMeta">
+            <div className="langSelectWrap">
+              <span className="langLabel">{t('languageLabel')}</span>
+              <select
+                className="langSelect"
+                value={lang}
+                onChange={(event) => setLanguage(event.target.value as Language)}
+                aria-label={t('languageLabel')}
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         <div className="updateCard">
@@ -73,6 +67,12 @@ export default function HeaderBar({
           <div className="updateValue">
             {lastPriceUpdateAt ? new Date(lastPriceUpdateAt).toLocaleString() : '—'}
           </div>
+          <button type="button" className="infoBtn updateTutorialBtn" onClick={onInfo} aria-label={t('openTutorialAria')}>
+            <span className="infoIcon" aria-hidden="true">
+              ⓘ
+            </span>
+            <span className="infoText">{t('tutorialVideo')}</span>
+          </button>
         </div>
       </div>
     </div>

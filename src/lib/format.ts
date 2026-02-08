@@ -62,16 +62,13 @@ export function arrowForDelta(delta: number | null) {
   return { arrow: '•', tone: 'flat' as const }
 }
 
-export function nowLocalTimeString(): string {
+export function nowLocalDateString(): string {
   const d = new Date()
-  return d.toLocaleString(undefined, {
+  return d.toLocaleDateString(undefined, {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
     day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
   })
 }
 
