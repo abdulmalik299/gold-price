@@ -16,15 +16,24 @@ export type GoldTick = {
 }
 
 export async function fetchTicks() {
-  // Fetch full history (limited for performance).
-  const { data, error } = await supabase
-    .from('gold_ticks')
-    .select('id, ts, price')
-    .order('ts', { ascending: true })
-    .limit(5000)
+  const all: GoldTick[] = []
+  const pageSize = 1000
+  let from = 0
+  while (true) {
+    const to = from + pageSize - 1
+    const { data, error } = await supabase
+      .from('gold_ticks')
+      .select('id, ts, price')
+      .order('ts', { ascending: true })
+      .range(from, to)
 
-  if (error) throw error
-  return (data ?? []) as GoldTick[]
+    if (error) throw error
+    if (!data?.length) break
+    all.push(...(data as GoldTick[]))
+    if (data.length < pageSize) break
+    from += pageSize
+  }
+  return all
 }
 
 export async function fetchTickAtOrBefore(isoTime: string): Promise<GoldTick | null> {
