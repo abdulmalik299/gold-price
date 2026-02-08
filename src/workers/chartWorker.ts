@@ -1,12 +1,9 @@
 /// <reference lib="webworker" />
 /**
  * Worker: bucket / downsample chart ticks for smooth UI.
- * - For 24h / 7d: keep raw (or light downsample if huge)
- * - For months: bucket by day
- * - For years: bucket by month
+ * - Auto bucket based on span for full-history charts.
  */
 export type Tick = { ts: string; price: number }
-export type Range = '24h' | '7d' | 'months' | 'years'
 export type Prepared = { x: number; y: number }[]
 
 function toMs(ts: string) {
@@ -70,22 +67,22 @@ function downsampleLttb(points: Prepared, threshold: number): Prepared {
   return sampled
 }
 
-self.onmessage = (e: MessageEvent<{ ticks: Tick[]; range: Range }>) => {
-  const { ticks, range } = e.data
+self.onmessage = (e: MessageEvent<{ ticks: Tick[] }>) => {
+  const { ticks } = e.data
   let prepared: Prepared = ticks.map((t) => ({ x: toMs(t.ts), y: t.price }))
+  const spanMs = prepared.length ? prepared[prepared.length - 1].x - prepared[0].x : 0
 
-  if (range === 'months') {
-    prepared = bucketBy(ticks, (ms) => {
-      const d = new Date(ms)
-      d.setHours(0, 0, 0, 0)
-      return d.getTime()
-    })
-  } else if (range === 'years') {
+  if (spanMs > 2 * 365 * 24 * 60 * 60_000) {
     prepared = bucketBy(ticks, (ms) => {
       const d = new Date(ms)
       d.setDate(1)
       d.setHours(0, 0, 0, 0)
-      d.setMonth(d.getMonth())
+      return d.getTime()
+    })
+  } else if (spanMs > 90 * 24 * 60 * 60_000) {
+    prepared = bucketBy(ticks, (ms) => {
+      const d = new Date(ms)
+      d.setHours(0, 0, 0, 0)
       return d.getTime()
     })
   }

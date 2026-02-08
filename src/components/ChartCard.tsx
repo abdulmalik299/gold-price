@@ -22,8 +22,6 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 
 ChartJS.register(LineController, LineElement, PointElement, LinearScale, TimeScale, Tooltip, Filler, Legend, zoomPlugin)
 
-type RangeKey = '24h' | '7d' | 'months' | 'years'
-
 type ChartWithMeta = Chart & {
   $precisionMode?: boolean
   $lastPrice?: { price: number; label: string } | null
@@ -169,16 +167,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [chartNow, setChartNow] = React.useState(() => new Date())
   const langRef = React.useRef(lang)
 
-  const [range, setRange] = React.useState<RangeKey>('24h')
-  const rangeItems = React.useMemo(
-    () => [
-      { key: '24h', label: t('range24h') },
-      { key: '7d', label: t('range7d') },
-      { key: 'months', label: t('rangeMonths') },
-      { key: 'years', label: t('rangeYears') },
-    ] as const,
-    [t]
-  )
   const [loading, setLoading] = React.useState(false)
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
@@ -187,8 +175,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const isFollowingLiveRef = React.useRef(true)
   const precisionModeRef = React.useRef(false)
   const latestPointRef = React.useRef<{ ts: number; price: number } | null>(null)
-  const rangeRef = React.useRef(range)
-  const lastRangeRef = React.useRef(range)
   const isMiddlePanRef = React.useRef(false)
   const middlePanPosRef = React.useRef<{ x: number; y: number } | null>(null)
   const longPressTimerRef = React.useRef<number | null>(null)
@@ -225,7 +211,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const nearLatest = Math.abs(xScale.max - latestTs) < Math.max(30_000, span * 0.03)
     setFollowLive(nearLatest)
     userInteractedRef.current = !nearLatest
-  }, [range, setFollowLive])
+  }, [setFollowLive])
 
   const setPrecisionMode = React.useCallback((enabled: boolean) => {
     precisionModeRef.current = enabled
@@ -248,7 +234,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         resolve(ev.data)
       }
       worker.addEventListener('message', onMsg as any)
-      worker.postMessage({ ticks: ticks.map((t) => ({ ts: t.ts, price: t.price })), range })
+      worker.postMessage({ ticks: ticks.map((t) => ({ ts: t.ts, price: t.price })) })
     })
 
     const data = prepared.prepared
@@ -346,7 +332,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 const min = scale.min
                 const max = scale.max
                 const span = Number.isFinite(min) && Number.isFinite(max) ? max - min : null
-                return formatTimeTick(value, rangeRef.current, span ?? undefined, langRef.current)
+                return formatTimeTick(value, span ?? undefined, langRef.current)
               },
             },
           },
@@ -404,11 +390,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const prevSpan = prevMin != null && prevMax != null ? prevMax - prevMin : null
     const prevData = ch.data.datasets[0].data as { x: number; y: number }[]
     const prevDataMax = prevData.length ? prevData[prevData.length - 1].x : null
-    const didRangeChange = lastRangeRef.current !== range
-    
     ch.data.datasets[0].data = data as any
     ch.data.datasets[1].data = staleOverlayData as any
-    lastRangeRef.current = range
     
     if (prevMin != null && prevMax != null && prevSpan != null && prevDataMax != null && data.length) {
       const newDataMax = data[data.length - 1].x
@@ -420,7 +403,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         setFollowLive(true)
       }
     }
-    if (didRangeChange || isFollowingLiveRef.current) {
+    if (isFollowingLiveRef.current) {
       applyDefaultZoom(ch)
     }
     ch.$isRtl = lang !== 'en'
@@ -430,29 +413,24 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ch.$lastPrice = null
     }
     ch.update()
-  }, [lang, range, setFollowLive, setPanMode, t])
+  }, [lang, setFollowLive, setPanMode, t])
 
   const load = React.useCallback(async () => {
     setLoading(true)
     setErr(null)
     try {
-      const ticks = await fetchTicks(range)
+      const ticks = await fetchTicks()
       await setData(ticks)
     } catch (e: any) {
       setErr(e?.message ?? t('failedToLoadHistory'))
     } finally {
       setLoading(false)
     }
-  }, [range, setData, t])
+  }, [setData, t])
 
   React.useEffect(() => {
     load()
   }, [load])
-
-  React.useEffect(() => {
-    rangeRef.current = range
-    setFollowLive(true)
-  }, [range, setFollowLive])
 
   React.useEffect(() => {
     const chart = chartRef.current as ChartWithMeta | null
@@ -611,19 +589,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       <div className="cardTop">
         <div className="cardTitle">{t('historyChartTitle')}</div>
         <div className="inlineRight chartControls">
-          <div className="rangeBtns">
-            {rangeItems.map((it) => (
-              <button
-                key={it.key}
-                type="button"
-                className={`chip ${range === it.key ? 'chipOn' : ''}`}
-                onClick={() => setRange(it.key)}
-              >
-                <span className="chipGlow" />
-                {it.label}
-              </button>
-            ))}
-          </div>
           {!isFollowingLive && (
             <button type="button" className="chip chipLive" onClick={handleBackToLive}>
               <span className="chipGlow" />
@@ -695,13 +660,6 @@ function buildStaleOverlay(points: { x: number; y: number }[], minimumMs = 5 * 6
   return overlay
 }
 
-function getDefaultZoomWindowMs(range: RangeKey) {
-  if (range === '24h') return 4 * 60 * 60_000
-  if (range === '7d') return 36 * 60 * 60_000
-  if (range === 'months') return 45 * 24 * 60 * 60_000
-  return 365 * 24 * 60 * 60_000
-}
-
 function applyDefaultZoom(chart: Chart | null) {
   if (!chart) return
   const data = chart.data.datasets[0].data as { x: number; y: number }[]
@@ -709,7 +667,10 @@ function applyDefaultZoom(chart: Chart | null) {
 
   const dataMax = data[data.length - 1].x
   const dataMin = data[0].x
-  setXScaleRange(chart, dataMin, dataMax)
+  const span = dataMax - dataMin
+  const windowSize = Math.max(span * 0.5, 60 * 60_000)
+  const min = Math.max(dataMin, dataMax - windowSize)
+  setXScaleRange(chart, min, dataMax)
 
   const zoomOptions = chart.options.plugins?.zoom
   if (zoomOptions?.limits?.x) {
@@ -724,16 +685,16 @@ function setXScaleRange(chart: Chart, min: number, max: number) {
   xScale.max = max
 }
 
-function formatTimeTick(value: string | number, range: RangeKey, spanMs: number | undefined, locale?: string) {
+function formatTimeTick(value: string | number, spanMs: number | undefined, locale?: string) {
   const time = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(time)) return ''
   const formatters = getTimeFormatters(locale)
-  const span = spanMs ?? getDefaultZoomWindowMs(range)
-  if (span <= 36 * 60 * 60_000 || range === '24h') {
+  const span = spanMs && spanMs > 0 ? spanMs : 365 * 24 * 60 * 60_000
+  if (span <= 36 * 60 * 60_000) {
     const date = new Date(time)
     return [formatters.hour.format(date), formatters.dateLong.format(date)]
   }
-  if (span <= 21 * 24 * 60 * 60_000 || range === '7d') {
+  if (span <= 21 * 24 * 60 * 60_000) {
     return formatters.day.format(new Date(time))
   }
   if (span <= 420 * 24 * 60 * 60_000) {
