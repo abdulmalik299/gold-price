@@ -72,7 +72,6 @@ body::before{
   object-fit: contain;
 }
 .brandTitleRow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.infoCluster{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .brandTitle{ font-weight: 850; letter-spacing:0.2px; font-size: 18px; }
 .brandSub{ color: var(--muted2); font-size: 12px; margin-top: 2px; }
 .langSelectWrap{
@@ -119,7 +118,13 @@ body::before{
 }
 .infoText{ letter-spacing: 0.2px; }
 
-.headerRight{ display:flex; gap:12px; align-items:stretch; margin-left:auto; }
+.headerRight{ display:flex; gap:12px; align-items:center; margin-left:auto; }
+.headerActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:flex-start;
+}
 .installBtn{ align-self:center; white-space:nowrap; }
 .clockCard,.updateCard{
   padding: 10px 12px;
@@ -158,6 +163,10 @@ body::before{
 .app.rtl .headerRight{
   margin-left: auto;
   margin-right: 0;
+}
+
+.app.rtl .headerActions{
+  align-items:flex-end;
 }
 
 .app.rtl .brand{
@@ -776,10 +785,10 @@ b{ color: rgba(255,255,255,0.92); }
   .header{ flex-direction:column; align-items:stretch; }
   .headerRight{ width:100%; justify-content:flex-end; flex-wrap:wrap; }
   .brandTitleRow{ flex-direction: column; align-items: flex-start; }
-  .infoCluster{ flex-direction: column; align-items: flex-start; width: 100%; }
-  .infoBtn{ order: 1; }
-  .langSelectWrap{ order: 2; }
-  .installBtn{ order: 3; }
+  .headerActions{ align-items: flex-start; width: 100%; order: 1; }
+  .installBtn{ order: 2; }
+  .clockCard{ order: 3; }
+  .updateCard{ order: 4; }
   .chartWrap{ height: 320px; }
   .app.rtl .header{ flex-direction: column; }
   .app.rtl .headerRight{
@@ -788,6 +797,7 @@ b{ color: rgba(255,255,255,0.92); }
     justify-content: flex-start;
   }
   .app.rtl .brand{ text-align: right; }
+  .app.rtl .headerActions{ align-items: flex-end; }
 }
 
 /* Extra small phones */
