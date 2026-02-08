@@ -667,10 +667,7 @@ function applyDefaultZoom(chart: Chart | null) {
 
   const dataMax = data[data.length - 1].x
   const dataMin = data[0].x
-  const span = dataMax - dataMin
-  const windowSize = Math.max(span * 0.5, 60 * 60_000)
-  const min = Math.max(dataMin, dataMax - windowSize)
-  setXScaleRange(chart, min, dataMax)
+  setXScaleRange(chart, dataMin, dataMax)
 
   const zoomOptions = chart.options.plugins?.zoom
   if (zoomOptions?.limits?.x) {
