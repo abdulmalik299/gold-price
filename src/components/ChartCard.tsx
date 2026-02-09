@@ -317,7 +317,11 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
           },
           y: {
             grid: { color: 'rgba(255,255,255,0.06)' },
-            ticks: { color: 'rgba(255,255,255,0.55)' },
+            position: 'right',
+            ticks: {
+              color: 'rgba(255,255,255,0.55)',
+              padding: 10,
+            },
           },
         },
       }
