@@ -175,15 +175,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const isFollowingLiveRef = React.useRef(true)
   const precisionModeRef = React.useRef(false)
   const latestPointRef = React.useRef<{ ts: number; price: number } | null>(null)
-  const isMiddlePanRef = React.useRef(false)
-  const middlePanPosRef = React.useRef<{ x: number; y: number } | null>(null)
   const longPressTimerRef = React.useRef<number | null>(null)
   const lastTapRef = React.useRef<number>(0)
-  const setPanMode = React.useCallback((chart: Chart, mode: 'x' | 'xy') => {
-    const zoomOptions = chart.options.plugins?.zoom
-    if (!zoomOptions?.pan) return
-    zoomOptions.pan.mode = mode
-  }, [])
 
   React.useEffect(() => {
     const id = window.setInterval(() => setChartNow(new Date()), 1000)
@@ -219,7 +212,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ;(chartRef.current as ChartWithMeta).$precisionMode = enabled
       chartRef.current.update('none')
     }
-  }, [setPanMode, updateFollowState])
+  }, [])
   
   const setData = React.useCallback(async (ticks: GoldTick[]) => {
     if (!canvasRef.current) return
@@ -274,21 +267,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
           zoom: {
             pan: {
               enabled: true,
-              mode: 'x',
-              onPanStart: ({ chart, event }) => {
-                const nativeEvent = (event as unknown as { native?: Event; srcEvent?: Event })?.native
-                  ?? (event as unknown as { srcEvent?: Event })?.srcEvent
-                if (nativeEvent instanceof TouchEvent && nativeEvent.touches?.length === 2) {
-                  setPanMode(chart, 'xy')
-                  return true
-                }
-                if (nativeEvent instanceof MouseEvent && nativeEvent.button === 1) {
-                  setPanMode(chart, 'xy')
-                  return true
-                }
-                setPanMode(chart, 'x')
-                return true
-              },
+              mode: 'xy',
               onPan: () => {
                 userInteractedRef.current = true
                 setFollowLive(false)
@@ -413,7 +392,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ch.$lastPrice = null
     }
     ch.update()
-  }, [lang, setFollowLive, setPanMode, t])
+  }, [lang, setFollowLive, t])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -479,51 +458,19 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const handleMouseDown = (event: MouseEvent) => {
-      if (event.button !== 1) return
-      isMiddlePanRef.current = true
-      middlePanPosRef.current = { x: event.clientX, y: event.clientY }
+    const handlePointerUp = () => {
       const chart = chartRef.current
-      if (chart) setPanMode(chart, 'xy')
-      event.preventDefault()
+      if (chart) updateFollowState(chart, latestPointRef.current?.ts ?? null)
     }
 
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!isMiddlePanRef.current || !middlePanPosRef.current) return
-      const prev = middlePanPosRef.current
-      const deltaX = event.clientX - prev.x
-      const deltaY = event.clientY - prev.y
-      middlePanPosRef.current = { x: event.clientX, y: event.clientY }
-      const chart = chartRef.current as any
-      if (chart?.pan) {
-        chart.pan({ x: deltaX, y: deltaY }, undefined, 'default')
-        chart.update('none')
-        userInteractedRef.current = true
-      }
-    }
-
-    const endMiddlePan = () => {
-      isMiddlePanRef.current = false
-      middlePanPosRef.current = null
-      const chart = chartRef.current
-      if (chart) {
-        setPanMode(chart, 'x')
-        updateFollowState(chart, latestPointRef.current?.ts ?? null)
-      }
-    }
-
-    canvas.addEventListener('mousedown', handleMouseDown)
-    canvas.addEventListener('mousemove', handleMouseMove)
-    canvas.addEventListener('mouseup', endMiddlePan)
-    canvas.addEventListener('mouseleave', endMiddlePan)
+    canvas.addEventListener('mouseup', handlePointerUp)
+    canvas.addEventListener('mouseleave', handlePointerUp)
 
     return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown)
-      canvas.removeEventListener('mousemove', handleMouseMove)
-      canvas.removeEventListener('mouseup', endMiddlePan)
-      canvas.removeEventListener('mouseleave', endMiddlePan)
+      canvas.removeEventListener('mouseup', handlePointerUp)
+      canvas.removeEventListener('mouseleave', handlePointerUp)
     }
-  }, [setPanMode, updateFollowState])
+  }, [updateFollowState])
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

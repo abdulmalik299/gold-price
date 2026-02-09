@@ -147,7 +147,7 @@ const translations: Record<Language, Translations> = {
     lastLabel: ({ price, time }) => `Last: ${price} @ ${time}`,
     noDataYet: 'No data yet',
     chartHelp:
-      'Desktop: wheel zooms, left-drag pans (x-axis), middle-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
+      'Desktop: wheel zooms, left-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
     goldLabel: 'Gold',
     staleLabel: 'No price change > 5 min',
   },
@@ -290,7 +290,7 @@ const translations: Record<Language, Translations> = {
     lastLabel: ({ price, time }) => `دوایین نوێکاری: ${price} @ ${time}`,
     noDataYet: 'هێشتا داتا نیە',
     chartHelp:
-      'Desktop: wheel zooms, left-drag pans (x-axis), middle-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
+      'Desktop: wheel zooms, left-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
     goldLabel: 'زێڕ',
     staleLabel: 'گۆڕانی نرخ > ٥ خولەک نیە',
   },
@@ -433,7 +433,7 @@ const translations: Record<Language, Translations> = {
     lastLabel: ({ price, time }) => `آخر: ${price} @ ${time}`,
     noDataYet: 'لا توجد بيانات بعد',
     chartHelp:
-      'Desktop: wheel zooms, left-drag pans (x-axis), middle-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
+      'Desktop: wheel zooms, left-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
     goldLabel: 'الذهب',
     staleLabel: 'لا تغيير في السعر > 5 دقائق',
   },
