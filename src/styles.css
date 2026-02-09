@@ -188,6 +188,7 @@ body::before{
 
 .app.rtl .brand{
   text-align: right;
+  flex-direction: row-reverse;
 }
 .app.rtl .brandMeta{
   flex-direction: row-reverse;
