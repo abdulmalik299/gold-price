@@ -205,7 +205,6 @@ export default function App() {
             <div className="rightCol">
               <KaratsCard
                 ounceUsd={live.ounceUsd}
-                prevOunceUsd={live.prevOunceUsd}
                 externalMarginIqd={mainMargin}
                 onMainMarginSync={setMainMargin}
               />

@@ -1,8 +1,8 @@
 import React from 'react'
 import Segmented from './Segmented'
 import NumberInput from './NumberInput'
-import { KaratKey, UnitKey, deltaAndPercent, priceForKarat } from '../lib/calc'
-import { arrowForDelta, formatMoney, formatPercent, parseLooseNumber } from '../lib/format'
+import { KaratKey, UnitKey, priceForKarat } from '../lib/calc'
+import { formatMoney, parseLooseNumber } from '../lib/format'
 import { getJSON, setJSON } from '../lib/storage'
 import { useI18n } from '../lib/i18n'
 
@@ -10,12 +10,11 @@ const KARATS: KaratKey[] = ['24k', '22k', '21k', '18k']
 
 type Props = {
   ounceUsd: number | null
-  prevOunceUsd: number | null
   onMainMarginSync?: (marginIqd: number) => void
   externalMarginIqd?: number
 }
 
-export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, externalMarginIqd }: Props) {
+export default function KaratsCard({ ounceUsd, onMainMarginSync, externalMarginIqd }: Props) {
   const { t } = useI18n()
   const [usdToIqdText, setUsdToIqdText] = React.useState(() => getJSON('usdToIqdText', ''))
   const [unit, setUnit] = React.useState<UnitKey>(() => getJSON('unit', 'mithqal'))
@@ -77,39 +76,17 @@ export default function KaratsCard({ ounceUsd, prevOunceUsd, onMainMarginSync, e
           const pNow =
             ounceUsd == null ? null : priceForKarat(ounceUsd, k, unit, usdToIqd, effectiveMargin)
 
-          // PREVIOUS total (based on prev market move prevOunceUsd)
-          const pPrev =
-            prevOunceUsd == null ? null : priceForKarat(prevOunceUsd, k, unit, usdToIqd, effectiveMargin)
-
           const currency = pNow?.currency ?? (usdToIqd && usdToIqd > 0 ? 'IQD' : 'USD')
           const decimals = currency === 'IQD' ? 0 : 2
 
-          const currTotal = pNow?.total ?? 0
-          const prevTotal = pPrev?.total ?? null
-
-          const { delta, pct } = deltaAndPercent(currTotal, prevTotal)
-          const { arrow, tone } = arrowForDelta(delta)
-          const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
-
           const money = pNow ? formatMoney(pNow.total, currency, decimals) : '—'
-          const deltaMoney = pNow ? formatMoney(delta, currency, decimals) : '—'
 
           return (
             <div className="karatRow" key={k}>
               <div className="karatK">{k.toUpperCase()}</div>
               <div className="karatV">
                 <div className="karatPrice">{money}</div>
-
-                {pNow ? (
-                  <div className={`changeRow mini ${cls}`}>
-                    <span className="arrow">{arrow}</span>
-                    <span>{deltaMoney}</span>
-                    <span className="dotSep">•</span>
-                    <span>{formatPercent(pct)}</span>
-                  </div>
-                ) : (
-                  <div className="mutedTiny">{t('waiting')}</div>
-                )}
+                {!pNow ? <div className="mutedTiny">{t('waiting')}</div> : null}
               </div>
             </div>
           )

@@ -25,21 +25,23 @@ export default function HeaderBar({
     <div className="header">
       <div className="brand">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} className="brandIcon" alt="Au" />
-        <div>
-          <div className="brandTitleRow">
-            <div className="brandTitle">{t('brandTitle')}</div>
+        <div className="brandMeta">
+          <div className="brandText">
+            <div className="brandTitleRow">
+              <div className="brandTitle">{t('brandTitle')}</div>
+            </div>
+            <div className="brandSub">{t('brandSub')}</div>
           </div>
-          <div className="brandSub">{t('brandSub')}</div>
+          {canInstall && (
+            <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
+              {t('installApp')}
+              <span className="btnGlow" />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="headerRight">
-        {canInstall && (
-          <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
-            {t('installApp')}
-            <span className="btnGlow" />
-          </button>
-        )}
         <div className="clockCard">
           <div className="clock">{clock}</div>
           <div className="clockSub">{nowLocalDateString()}</div>
