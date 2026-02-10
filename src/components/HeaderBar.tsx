@@ -58,6 +58,8 @@ export default function HeaderBar({
             <div className="langSelectWrap">
               <span className="langLabel">{t('languageLabel')}</span>
               <select
+                id="language-select"
+                name="language"
                 className="langSelect"
                 value={lang}
                 onChange={(event) => setLanguage(event.target.value as Language)}

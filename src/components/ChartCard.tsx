@@ -122,7 +122,6 @@ const lastPricePlugin = {
     const label = lastPrice.label
     ctx.font = '600 11px system-ui, -apple-system, sans-serif'
     const paddingX = 6
-    const paddingY = 4
     const textWidth = ctx.measureText(label).width
     const boxWidth = textWidth + paddingX * 2
     const boxHeight = 18
@@ -209,7 +208,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const setPrecisionMode = React.useCallback((enabled: boolean) => {
     precisionModeRef.current = enabled
     if (chartRef.current) {
-      ;(chartRef.current as ChartWithMeta).$precisionMode = enabled
+      (chartRef.current as ChartWithMeta).$precisionMode = enabled
       chartRef.current.update('none')
     }
   }, [])
@@ -396,7 +395,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ch.$lastPrice = null
     }
     ch.update()
-  }, [lang, setFollowLive, t])
+  }, [lang, setFollowLive, t, updateFollowState])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -432,7 +431,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     return () => window.clearTimeout(id)
   }, [liveOunceUsd, load])
 
-  function resetZoom() {
+  const resetZoom = React.useCallback(() => {
     const ch = chartRef.current as any
     if (!ch) return
     if (typeof ch.resetZoom === 'function') ch.resetZoom()
@@ -440,7 +439,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     setFollowLive(true)
     applyDefaultZoom(chartRef.current)
     chartRef.current?.update()
-  }
+  }, [setFollowLive])
 
   React.useEffect(() => {
     return () => {
@@ -618,7 +617,9 @@ function applyDefaultZoom(chart: Chart | null) {
 
   const dataMax = data[data.length - 1].x
   const dataMin = data[0].x
-  setXScaleRange(chart, dataMin, dataMax)
+  const totalSpan = Math.max(dataMax - dataMin, 60_000)
+  const zoomedMin = Math.max(dataMin, dataMax - totalSpan * 0.5)
+  setXScaleRange(chart, zoomedMin, dataMax)
 
   const zoomOptions = chart.options.plugins?.zoom
   if (zoomOptions?.limits?.x) {
