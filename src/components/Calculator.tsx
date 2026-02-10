@@ -223,9 +223,7 @@ export default function Calculator() {
         ) : null}
       </div>
 
-      <div className="mutedTiny">
-        {t('calcTipDivide')}
-      </div>
+      {t('calcTipDivide') ? <div className="mutedTiny">{t('calcTipDivide')}</div> : null}
     </div>
   )
 }

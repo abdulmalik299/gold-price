@@ -132,7 +132,7 @@ export default function LiveOunceCard({
       <div className="bigNumber">{ounceUsd == null ? '—' : formatMoney(ounceUsd, 'USD')}</div>
 
       <div className={`changeRow ${cls}`}>
-        <span className="changeLabel">{t('lastDay')}</span>
+        <span className="changeLabel">{t('today')}</span>
         <span className="arrow">{arrow}</span>
         <span className="changeAmt">{formatMoney(delta, 'USD')}</span>
         <span className="dotSep">•</span>
