@@ -131,6 +131,33 @@ body::before{
 
 .headerRight{ display:flex; gap:12px; align-items:center; margin-left:auto; }
 .installBtn{ align-self:center; white-space:nowrap; }
+.installImageBtn{
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+.installBtnImage{
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+  transition: transform .12s ease, filter .12s ease;
+}
+.installImageBtn:hover .installBtnImage{
+  transform: translateY(-1px) scale(1.02);
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.46));
+}
+.installImageBtn:active .installBtnImage{
+  transform: translateY(0) scale(0.98);
+}
+.installImageBtn:focus-visible{
+  outline: 2px solid rgba(247,215,122,0.6);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
 .clockCard,.updateCard{
   padding: 10px 12px;
   border-radius: 16px;
