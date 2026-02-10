@@ -19,7 +19,8 @@ export async function fetchTicks() {
   const all: GoldTick[] = []
   const pageSize = 1000
   let from = 0
-  while (true) {
+  let hasMore = true
+  while (hasMore) {
     const to = from + pageSize - 1
     const { data, error } = await supabase
       .from('gold_ticks')
@@ -28,9 +29,15 @@ export async function fetchTicks() {
       .range(from, to)
 
     if (error) throw error
-    if (!data?.length) break
+    if (!data?.length) {
+      hasMore = false
+      continue
+    }
     all.push(...(data as GoldTick[]))
-    if (data.length < pageSize) break
+    if (data.length < pageSize) {
+      hasMore = false
+      continue
+    }
     from += pageSize
   }
   return all
