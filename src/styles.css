@@ -240,6 +240,12 @@ body::before{
   direction: rtl;
 }
 
+
+.app.rtl .brandTitleRow{
+  width: 100%;
+  justify-content: flex-end;
+}
+
 .app.rtl .layout{
   grid-template-columns: 1fr 1.7fr;
   grid-template-areas:

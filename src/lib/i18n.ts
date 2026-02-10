@@ -27,8 +27,7 @@ const translations: Record<Language, Translations> = {
     installModalText:
       'If the popup does not appear automatically, open your browser menu and tap Install app / Add to Home screen. This app is already configured as a PWA and works offline after install.',
     close: 'Close',
-    footerNote:
-      'Optimized for fast, reliable access. Price history is continuously saved and kept up to date automatically.',
+    footerNote: 'Optimized for fast, reliable access.',
     usageNoticeTitle: 'User Notice and Usage Agreement — Please Read Carefully',
     usageNoticeP1:
       'Before using this tool, you are strongly advised to watch the official tutorial video. The video explains how the calculator works, how to enter values correctly, and how to interpret the results. Using the tool without understanding the instructions may lead to incorrect assumptions.',
@@ -120,7 +119,7 @@ const translations: Record<Language, Translations> = {
     clear: 'Clear',
     noHistoryYet: 'No history yet.',
     calcError: 'Error',
-    calcTipDivide: 'Tip: use ÷ for division.',
+    calcTipDivide: '',
     feedbackTitle: 'Feedback / Suggestions',
     feedbackSub: 'Share ideas or report issues',
     nameOptional: 'Name (optional)',
@@ -170,8 +169,7 @@ const translations: Record<Language, Translations> = {
     installModalText:
       'ئەگەر پۆپەکە خۆکارانە دەربکەوێت نا، مێنیوی وێبگەڕکەت بکەرەوە و لەسەر Install app / Add to Home screen کلیک بکە. ئەم ئەپە وەک PWA ڕێکخراوە و دوای دامەزراندن بە بێ ئینتەرنێتیش کار دەکات.',
     close: 'داخستن',
-    footerNote:
-      'بۆ دەستڕاگەیشتنی خێرا و باوەڕپێکراو ڕێکخراوە. مێژووی نرخ بەردەوام هەڵگیراوە و خۆکارانە نوێ دەکرێتەوە.',
+    footerNote: 'بۆ دەستڕاگەیشتنی خێرا و باوەڕپێکراو ڕێکخراوە.',
     usageNoticeTitle: 'ئاگاداری بۆ بەکارهێنەرو ڕازی بوونی بەکارهێنان — تکایە بە وردی بیخوێنەوە',
     usageNoticeP1:
       'پێش بەکارهێنانی ئەم ئامرازە، پێویستە زۆر بە ورییاییەوە ڤیدیۆی فێرکاری چۆنیەتی بەکارهێنانی ئەم پەڕەیە ببینیت لە خوارەوە. ڤیدیۆکە روونی دەکاتەوە کە چۆن هەژمارکردنەکان کاردەکەن وە چۆن بەهایەکان بەڕاست و درووستی دابنێین وە هەروەها چۆن ئەنجامەکان لێکبدەینەوە. بەکارهێنانی ئەم پەڕەیە بە بێ تێگەیشتن لە ڕێنماییەکان دەکرێت ببێتە هۆی تێڕوانینی هەڵە.',
@@ -263,7 +261,7 @@ const translations: Record<Language, Translations> = {
     clear: 'پاککردنەوە',
     noHistoryYet: 'هێشتا مێژوو نیە.',
     calcError: 'هەڵە',
-    calcTipDivide: 'ئامۆژگاری: بۆ دابەشکردن ÷ بەکاربهێنە.',
+    calcTipDivide: '',
     feedbackTitle: 'فیدباک / پێشنیار',
     feedbackSub: 'پێشنیار بۆ ئەم پەیجە بنووسە',
     nameOptional: 'ناو (ئارەزوومەند)',
@@ -277,7 +275,7 @@ const translations: Record<Language, Translations> = {
     sendFeedback: 'ناردنی فیدباک',
     sending: 'ناردن…',
     feedbackWebsiteLabel: 'ماڵپەڕ',
-    historyChartTitle: 'چارتەی مێژوو',
+    historyChartTitle: 'وێنەی ‌هێلکاری',
     range24h: '٢٤ کاتژمێر',
     range7d: '٧ ڕۆژ',
     rangeMonths: 'مانگەکان',
@@ -313,8 +311,7 @@ const translations: Record<Language, Translations> = {
     installModalText:
       'إذا لم تظهر النافذة المنبثقة تلقائيًا، افتح قائمة المتصفح واضغط تثبيت التطبيق / إضافة إلى الشاشة الرئيسية. هذا التطبيق مُعد كـ PWA ويعمل دون اتصال بعد التثبيت.',
     close: 'إغلاق',
-    footerNote:
-      'محسّن للوصول السريع والموثوق. يتم حفظ سجل الأسعار باستمرار وتحديثه تلقائيًا.',
+    footerNote: 'محسّن للوصول السريع والموثوق.',
     usageNoticeTitle: 'تنبيه المستخدم واتفاقية الاستخدام — يرجى القراءة بعناية',
     usageNoticeP1:
       'قبل استخدام هذه الأداة، يُنصح بشدة بمشاهدة فيديو الشرح الرسمي. يوضح الفيديو كيفية عمل الآلة الحاسبة، وكيفية إدخال القيم بشكل صحيح، وكيفية تفسير النتائج. استخدام الأداة دون فهم التعليمات قد يؤدي إلى افتراضات غير صحيحة.',
@@ -406,7 +403,7 @@ const translations: Record<Language, Translations> = {
     clear: 'مسح',
     noHistoryYet: 'لا يوجد سجل بعد.',
     calcError: 'خطأ',
-    calcTipDivide: 'نصيحة: استخدم ÷ للقسمة.',
+    calcTipDivide: '',
     feedbackTitle: 'ملاحظات / اقتراحات',
     feedbackSub: 'شارك الأفكار أو أبلغ عن المشاكل',
     nameOptional: 'الاسم (اختياري)',
