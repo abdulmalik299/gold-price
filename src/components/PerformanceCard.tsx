@@ -13,6 +13,11 @@ type Row = {
   tsTarget: number
 }
 
+type LastDaySnapshot = {
+  startPrice: number | null
+  endPrice: number | null
+}
+
 function minusDays(nowMs: number, days: number) {
   return nowMs - days * 24 * 60 * 60 * 1000
 }
@@ -39,6 +44,10 @@ export default function PerformanceCard({ ounceUsd }: { ounceUsd: number | null 
     '1y': null,
     '5y': null,
     '20y': null,
+  })
+  const [lastDaySnapshot, setLastDaySnapshot] = React.useState<LastDaySnapshot>({
+    startPrice: null,
+    endPrice: null,
   })
   const [sessionKey, setSessionKey] = React.useState(() => new Date(getLastMarketOpenMs()).toISOString())
 
@@ -68,18 +77,39 @@ export default function PerformanceCard({ ounceUsd }: { ounceUsd: number | null 
     let alive = true
     ;(async () => {
       try {
-        // Only compute baselines if we have a current price
-        if (ounceUsd == null) return
+        const sessionStartMs = new Date(sessionKey).getTime()
+        const prevSessionStartMs = getLastMarketOpenMs(sessionStartMs - 1)
 
-        const next: Record<RowKey, number | null> = { ...base }
+        const [prevSessionTick, currentSessionTick] = await Promise.all([
+          fetchTickAtOrBefore(new Date(prevSessionStartMs).toISOString()),
+          fetchTickAtOrBefore(new Date(sessionStartMs).toISOString()),
+        ])
+
+        if (!alive) return
+        setLastDaySnapshot({
+          startPrice: prevSessionTick?.price ?? null,
+          endPrice: currentSessionTick?.price ?? null,
+        })
+
+        const next: Record<RowKey, number | null> = {
+          lastDay: prevSessionTick?.price ?? null,
+          '7d': null,
+          '30d': null,
+          '6m': null,
+          '1y': null,
+          '5y': null,
+          '20y': null,
+        }
 
         // Fetch each baseline: the latest tick at or before the target time.
         // (This makes it stable and NOT "previous poll" based.)
         await Promise.all(
-          rows.map(async (r) => {
-            const tick = await fetchTickAtOrBefore(new Date(r.tsTarget).toISOString())
-            next[r.key] = tick?.price ?? null
-          })
+          rows
+            .filter((r) => r.key !== 'lastDay')
+            .map(async (r) => {
+              const tick = await fetchTickAtOrBefore(new Date(r.tsTarget).toISOString())
+              next[r.key] = tick?.price ?? null
+            })
         )
 
         if (!alive) return
@@ -111,14 +141,27 @@ export default function PerformanceCard({ ounceUsd }: { ounceUsd: number | null 
         </div>
 
         {rows.map((r) => {
-          const curr = ounceUsd ?? 0
-          const prev = base[r.key]
+          const prev = r.key === 'lastDay' ? lastDaySnapshot.startPrice : base[r.key]
+          const curr = r.key === 'lastDay' ? lastDaySnapshot.endPrice : ounceUsd
+
+          if (curr == null || prev == null) {
+            return (
+              <div className="perfRow" key={r.key}>
+                <div className="perfLabel">{r.label}</div>
+                <div className="perfAmt right chgFlat">
+                  <span className="arrow">→</span> —
+                </div>
+                <div className="perfPct right chgFlat">—</div>
+              </div>
+            )
+          }
+
           const { delta, pct } = deltaAndPercent(curr, prev)
           const { arrow, tone } = arrowForDelta(delta)
           const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
 
-          const amount = prev == null ? '—' : formatMoney(delta, 'USD', 2)
-          const pctTxt = prev == null ? '—' : formatPercent(pct)
+          const amount = formatMoney(delta, 'USD', 2)
+          const pctTxt = formatPercent(pct)
 
           return (
             <div className="perfRow" key={r.key}>
