@@ -74,7 +74,7 @@ body::before{
   align-items:flex-start;
 }
 .brandIcon{
-  width:70px; height:70px;
+  width:35px; height:35px;
   border-radius: 0;
   background: transparent;
   padding:0;
