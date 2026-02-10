@@ -33,9 +33,18 @@ export default function HeaderBar({
             <div className="brandSub">{t('brandSub')}</div>
           </div>
           {canInstall && (
-            <button type="button" className="btn btnGold installBtn" onClick={onInstall}>
-              {t('installApp')}
-              <span className="btnGlow" />
+            <button
+              type="button"
+              className="installBtn installImageBtn"
+              onClick={onInstall}
+              aria-label={t('installApp')}
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}media/install-app-badge.svg`}
+                className="installBtnImage"
+                alt=""
+                aria-hidden="true"
+              />
             </button>
           )}
         </div>
