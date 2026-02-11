@@ -25,7 +25,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
 }
 
-const VIDEO_SRC = 'https://pub-8f48e2dbfd7f4f0080da3b71b362a9d4.r2.dev'
+const VIDEO_SRC = 'https://pub-8f48e2dbfd7f4f0080da3b71b362a9d4.r2.dev/tutorial_1_1.mp4'
 const VIDEO_CACHE_NAME = 'tutorial-video-cache'
 const VIDEO_THUMB = `${import.meta.env.BASE_URL}media/thumbnail.png`
 
