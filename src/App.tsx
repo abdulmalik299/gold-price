@@ -25,7 +25,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
 }
 
-const VIDEO_SRC = `${import.meta.env.BASE_URL}media/tutorial.mp4`
+const VIDEO_SRC = 'https://drive.google.com/uc?export=download&id=15Kv8scxDp7zmkHckzsUAsQ7BBK6mVzC7'
 const VIDEO_CACHE_NAME = 'tutorial-video-cache'
 const VIDEO_THUMB = `${import.meta.env.BASE_URL}media/thumbnail.png`
 
