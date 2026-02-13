@@ -28,6 +28,16 @@ type ChartWithMeta = Chart & {
   $isRtl?: boolean
 }
 
+type RangePreset = '1D' | '1W' | '1M' | '3M' | 'ALL'
+
+type ViewStats = {
+  high: number
+  low: number
+  change: number
+  changePct: number
+  volatilityPct: number
+}
+
 const TIME_FORMATTERS = new Map<string, ReturnType<typeof buildTimeFormatters>>()
 
 function buildTimeFormatters(locale?: string) {
@@ -172,6 +182,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [isFollowingLive, setIsFollowingLive] = React.useState(true)
   const [showEma, setShowEma] = React.useState(true)
   const [showTrendColors, setShowTrendColors] = React.useState(true)
+  const [rangePreset, setRangePreset] = React.useState<RangePreset>('ALL')
+  const [viewStats, setViewStats] = React.useState<ViewStats | null>(null)
   const userInteractedRef = React.useRef(false)
   const isFollowingLiveRef = React.useRef(true)
   const precisionModeRef = React.useRef(false)
@@ -213,6 +225,20 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       (chartRef.current as ChartWithMeta).$precisionMode = enabled
       chartRef.current.update('none')
     }
+  }, [])
+
+  const updateStatsFromRange = React.useCallback((chart: Chart) => {
+    const series = chart.data.datasets[0].data as { x: number; y: number }[]
+    if (!series.length) {
+      setViewStats(null)
+      return
+    }
+    const xScale = chart.scales.x
+    const min = Number.isFinite(xScale?.min) ? xScale.min : series[0].x
+    const max = Number.isFinite(xScale?.max) ? xScale.max : series[series.length - 1].x
+    const visible = series.filter((point) => point.x >= min && point.x <= max)
+    const points = visible.length >= 2 ? visible : series
+    setViewStats(calculateViewStats(points))
   }, [])
   
   const setData = React.useCallback(async (ticks: GoldTick[]) => {
@@ -294,6 +320,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               },
               onPanComplete: ({ chart }) => {
                 updateFollowState(chart, latestPointRef.current?.ts ?? null)
+                updateStatsFromRange(chart)
+                setRangePreset('ALL')
               },
             },
             zoom: {
@@ -306,6 +334,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               },
               onZoomComplete: ({ chart }) => {
                 updateFollowState(chart, latestPointRef.current?.ts ?? null)
+                updateStatsFromRange(chart)
+                setRangePreset('ALL')
               },
             },
             limits: {
@@ -402,6 +432,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       chartWithMeta.$lastPrice = last ? { price: last.y, label: `${formatMoney(last.y, 'USD')}` } : null
       chartWithMeta.$isRtl = lang !== 'en'
       applyDefaultZoom(chartRef.current)
+      updateStatsFromRange(chartRef.current)
       return
     }
 
@@ -437,7 +468,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ch.$lastPrice = null
     }
     ch.update()
-  }, [lang, setFollowLive, showEma, showTrendColors, t, updateFollowState])
+    updateStatsFromRange(ch)
+  }, [lang, setFollowLive, showEma, showTrendColors, t, updateFollowState, updateStatsFromRange])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -481,7 +513,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     setFollowLive(true)
     applyDefaultZoom(chartRef.current)
     chartRef.current?.update()
-  }, [setFollowLive])
+    if (chartRef.current) updateStatsFromRange(chartRef.current)
+    setRangePreset('ALL')
+  }, [setFollowLive, updateStatsFromRange])
 
   React.useEffect(() => {
     return () => {
@@ -586,13 +620,62 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     setFollowLive(true)
     applyDefaultZoom(chartRef.current)
     chartRef.current?.update()
-  }, [setFollowLive])
+    if (chartRef.current) updateStatsFromRange(chartRef.current)
+    setRangePreset('ALL')
+  }, [setFollowLive, updateStatsFromRange])
+
+  const applyRangePreset = React.useCallback((preset: RangePreset) => {
+    const chart = chartRef.current
+    if (!chart) return
+    const points = chart.data.datasets[0].data as { x: number; y: number }[]
+    if (!points.length) return
+
+    const max = points[points.length - 1].x
+    const spanByPreset: Record<Exclude<RangePreset, 'ALL'>, number> = {
+      '1D': 24 * 60 * 60_000,
+      '1W': 7 * 24 * 60 * 60_000,
+      '1M': 30 * 24 * 60 * 60_000,
+      '3M': 90 * 24 * 60 * 60_000,
+    }
+
+    if (preset === 'ALL') {
+      setFollowLive(true)
+      applyDefaultZoom(chart)
+    } else {
+      const min = Math.max(points[0].x, max - spanByPreset[preset])
+      setXScaleRange(chart, min, max)
+      setFollowLive(true)
+    }
+
+    chart.update()
+    updateStatsFromRange(chart)
+    setRangePreset(preset)
+  }, [setFollowLive, updateStatsFromRange])
 
   return (
     <div className="card chart">
       <div className="cardTop">
         <div className="cardTitle">{t('historyChartTitle')}</div>
         <div className="inlineRight chartControls">
+          <div className="rangeBtns">
+            {([
+              { value: '1D', label: t('chartRange1D') },
+              { value: '1W', label: t('chartRange1W') },
+              { value: '1M', label: t('chartRange1M') },
+              { value: '3M', label: t('chartRange3M') },
+              { value: 'ALL', label: t('chartRangeALL') },
+            ] as const).map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                className={`chip ${rangePreset === preset.value ? 'chipOn' : ''}`}
+                onClick={() => applyRangePreset(preset.value)}
+              >
+                <span className="chipGlow" />
+                {preset.label}
+              </button>
+            ))}
+          </div>
           <button type="button" className={`chip ${showEma ? 'chipOn' : ''}`} onClick={() => setShowEma((v) => !v)}>
             <span className="chipGlow" />
             {t('emaShort')}
@@ -632,6 +715,29 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         </div>
       </div>
 
+      {viewStats && (
+        <div className="chartStatsGrid">
+          <div className="chartStatBox">
+            <div className="chartStatLabel">{t('chartHigh')}</div>
+            <div className="chartStatValue">{formatMoney(viewStats.high, 'USD')}</div>
+          </div>
+          <div className="chartStatBox">
+            <div className="chartStatLabel">{t('chartLow')}</div>
+            <div className="chartStatValue">{formatMoney(viewStats.low, 'USD')}</div>
+          </div>
+          <div className="chartStatBox">
+            <div className="chartStatLabel">{t('chartChange')}</div>
+            <div className={`chartStatValue ${viewStats.change >= 0 ? 'up' : 'down'}`}>
+              {viewStats.change >= 0 ? '+' : ''}{formatMoney(viewStats.change, 'USD')} ({viewStats.change >= 0 ? '+' : ''}{viewStats.changePct.toFixed(2)}%)
+            </div>
+          </div>
+          <div className="chartStatBox">
+            <div className="chartStatLabel">{t('chartVolatility')}</div>
+            <div className="chartStatValue">{viewStats.volatilityPct.toFixed(2)}%</div>
+          </div>
+        </div>
+      )}
+
       <div className="chartWrap">
         <canvas ref={canvasRef} className="chartCanvas" />
       </div>
@@ -646,6 +752,20 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       </div>
     </div>
   )
+}
+
+function calculateViewStats(points: { x: number; y: number }[]): ViewStats {
+  const prices = points.map((point) => point.y)
+  const high = Math.max(...prices)
+  const low = Math.min(...prices)
+  const first = points[0].y
+  const last = points[points.length - 1].y
+  const change = last - first
+  const changePct = first !== 0 ? (change / first) * 100 : 0
+  const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length
+  const variance = prices.reduce((sum, price) => sum + (price - mean) ** 2, 0) / prices.length
+  const volatilityPct = mean !== 0 ? (Math.sqrt(variance) / mean) * 100 : 0
+  return { high, low, change, changePct, volatilityPct }
 }
 
 function buildStaleOverlay(points: { x: number; y: number }[], minimumMs = 5 * 60_000) {
