@@ -8,6 +8,7 @@ import ConnectionStatus from './components/ConnectionStatus'
 import Calculator from './components/Calculator'
 import ChartCard from './components/ChartCard'
 import FeedbackCard from './components/FeedbackCard'
+import LuxuryPulseHub from './components/LuxuryPulseHub'
 
 import { fetchLiveOuncePrice } from './lib/goldApi'
 import { getJSON, setJSON } from './lib/storage'
@@ -173,9 +174,12 @@ export default function App() {
           <span className="mandala mandalaA" />
           <span className="mandala mandalaB" />
           <span className="mandala mandalaC" />
+          <span className="mandala mandalaD" />
+          <span className="mandala mandalaE" />
         </div>
         <div className="appContent" aria-hidden={showUsageNotice || showInfoNotice}>
-          <HeaderBar
+          <section className="heroFrame">
+            <HeaderBar
             lastPriceUpdateAt={live.lastPriceUpdateAt}
             canInstall={!isInstalled}
             onInstall={() => {
@@ -183,6 +187,9 @@ export default function App() {
             }}
             onInfo={() => setShowInfoNotice(true)}
           />
+
+          <LuxuryPulseHub ounceUsd={live.ounceUsd} prevOunceUsd={live.prevOunceUsd} lastPriceUpdateAt={live.lastPriceUpdateAt} />
+          </section>
 
           {/* Since last market move label */}
           <div className="mutedTiny" style={{ padding: '0 18px', marginTop: 6 }}>
