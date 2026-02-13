@@ -6,6 +6,8 @@
 export type Tick = { ts: string; price: number }
 export type Prepared = { x: number; y: number }[]
 
+type WorkerRequest = { ticks: Tick[]; requestId?: number }
+
 function toMs(ts: string) {
   const n = Date.parse(ts)
   return Number.isFinite(n) ? n : 0
@@ -68,8 +70,24 @@ function downsampleLttb(points: Prepared, threshold: number): Prepared {
 }
 
 self.onmessage = (e: MessageEvent<{ ticks: Tick[] }>) => {
-  const { ticks } = e.data
-  let prepared: Prepared = ticks.map((t) => ({ x: toMs(t.ts), y: t.price }))
+  const { ticks, requestId } = e.data as WorkerRequest
+  let prepared: Prepared = ticks
+    .map((t) => ({ x: toMs(t.ts), y: t.price }))
+    .filter((point) => point.x > 0 && Number.isFinite(point.y))
+    .sort((a, b) => a.x - b.x)
+
+  // Deduplicate by timestamp while preserving the latest point at each same x.
+  const deduped: Prepared = []
+  for (const point of prepared) {
+    const last = deduped[deduped.length - 1]
+    if (last && last.x === point.x) {
+      deduped[deduped.length - 1] = point
+      continue
+    }
+    deduped.push(point)
+  }
+  prepared = deduped
+
   const spanMs = prepared.length ? prepared[prepared.length - 1].x - prepared[0].x : 0
 
   if (spanMs > 2 * 365 * 24 * 60 * 60_000) {
@@ -87,8 +105,10 @@ self.onmessage = (e: MessageEvent<{ ticks: Tick[] }>) => {
     })
   }
 
-  // Downsample to 900 points for super smooth charting.
-  prepared = downsampleLttb(prepared, 900)
+  // Only downsample larger series to preserve fidelity for short ranges.
+  if (prepared.length > 1500) {
+    prepared = downsampleLttb(prepared, 900)
+  }
 
-  ;(self as any).postMessage({ prepared })
+  (self as any).postMessage({ prepared, requestId })
 }
