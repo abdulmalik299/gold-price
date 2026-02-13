@@ -148,6 +148,9 @@ const translations: Record<Language, Translations> = {
     chartHelp:
       'Desktop: wheel zooms, left-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
     goldLabel: 'Gold',
+    emaLabel: 'EMA (20)',
+    emaShort: 'EMA',
+    trendColors: 'Trend colors',
     staleLabel: 'No price change > 5 min',
   },
   ku: {
@@ -290,6 +293,9 @@ const translations: Record<Language, Translations> = {
     chartHelp:
       'Desktop: wheel zooms, left-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
     goldLabel: 'زێڕ',
+    emaLabel: 'EMA (20)',
+    emaShort: 'EMA',
+    trendColors: 'ڕەنگی ترێند',
     staleLabel: 'گۆڕانی نرخ > ٥ خولەک نیە',
   },
   ar: {
@@ -432,6 +438,9 @@ const translations: Record<Language, Translations> = {
     chartHelp:
       'Desktop: wheel zooms, left-drag pans freely, Alt holds precision crosshair. Mobile: drag to pan, pinch to zoom, long-press for crosshair, double-tap to reset.',
     goldLabel: 'الذهب',
+    emaLabel: 'المتوسط الأسي (20)',
+    emaShort: 'EMA',
+    trendColors: 'ألوان الاتجاه',
     staleLabel: 'لا تغيير في السعر > 5 دقائق',
   },
 }
