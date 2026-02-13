@@ -170,6 +170,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [lastPoint, setLastPoint] = React.useState<{ ts: number; price: number } | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
   const [isFollowingLive, setIsFollowingLive] = React.useState(true)
+  const [showEma, setShowEma] = React.useState(true)
+  const [showTrendColors, setShowTrendColors] = React.useState(true)
   const userInteractedRef = React.useRef(false)
   const isFollowingLiveRef = React.useRef(true)
   const precisionModeRef = React.useRef(false)
@@ -230,6 +232,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     })
 
     const data = prepared.prepared
+    const emaData = buildEma(data, 20)
     const staleOverlayData = buildStaleOverlay(data)
     const last = data.length ? data[data.length - 1] : null
     setLastPoint(last ? { ts: last.x, price: last.y } : null)
@@ -245,6 +248,11 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         interaction: { mode: 'nearest', intersect: false, axis: 'x' },
         plugins: {
           legend: { display: false },
+          decimation: {
+            enabled: true,
+            algorithm: 'lttb',
+            samples: 500,
+          },
           tooltip: {
             enabled: true,
             backgroundColor: 'rgba(10, 12, 18, 0.92)',
@@ -261,6 +269,19 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 return formatters.dateTime.format(new Date(parsedX))
               },
               label: (ctx) => ` ${formatMoney(ctx.parsed.y, 'USD')}`,
+              footer: (ctx) => {
+                if (!ctx.length) return ''
+                const dataset = ctx[0].dataset.data as { x: number; y: number }[]
+                const idx = ctx[0].dataIndex
+                const previous = idx > 0 ? dataset[idx - 1] : null
+                if (!previous) return ''
+                const currentY = ctx[0].parsed.y
+                if (currentY == null) return ''
+                const change = currentY - previous.y
+                const pct = previous.y !== 0 ? (change / previous.y) * 100 : 0
+                const sign = change >= 0 ? '+' : ''
+                return `${sign}${formatMoney(change, 'USD')} (${sign}${pct.toFixed(2)}%)`
+              },
             },
           },
           zoom: {
@@ -338,8 +359,27 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               pointHitRadius: 24,
               tension: 0.26,
               borderColor: 'rgba(247, 215, 122, 0.95)',
+              segment: {
+                borderColor: (ctx) => {
+                  if (!showTrendColors) return 'rgba(247, 215, 122, 0.95)'
+                  const up = (ctx.p1.parsed.y ?? 0) >= (ctx.p0.parsed.y ?? 0)
+                  return up ? 'rgba(78, 232, 167, 0.95)' : 'rgba(255, 124, 124, 0.95)'
+                },
+              },
               fill: true,
               backgroundColor: (c) => buildGradient(c.chart.ctx, c.chart),
+            },
+            {
+              label: 'EMA (20)',
+              data: emaData,
+              parsing: false,
+              borderWidth: 1.6,
+              pointRadius: 0,
+              pointHitRadius: 0,
+              tension: 0.3,
+              borderColor: 'rgba(99, 179, 255, 0.85)',
+              fill: false,
+              hidden: !showEma,
             },
             {
               label: t('staleLabel'),
@@ -373,7 +413,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     const prevData = ch.data.datasets[0].data as { x: number; y: number }[]
     const prevDataMax = prevData.length ? prevData[prevData.length - 1].x : null
     ch.data.datasets[0].data = data as any
-    ch.data.datasets[1].data = staleOverlayData as any
+    ch.data.datasets[1].data = emaData as any
+    ch.data.datasets[1].hidden = !showEma
+    ch.data.datasets[2].data = staleOverlayData as any
     
     if (prevMin != null && prevMax != null && prevSpan != null && prevDataMax != null && data.length) {
       const newDataMax = data[data.length - 1].x
@@ -395,7 +437,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       ch.$lastPrice = null
     }
     ch.update()
-  }, [lang, setFollowLive, t, updateFollowState])
+  }, [lang, setFollowLive, showEma, showTrendColors, t, updateFollowState])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -453,9 +495,21 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   React.useEffect(() => {
     if (!chartRef.current) return
     chartRef.current.data.datasets[0].label = t('goldLabel')
-    chartRef.current.data.datasets[1].label = t('staleLabel')
+    chartRef.current.data.datasets[1].label = t('emaLabel')
+    chartRef.current.data.datasets[2].label = t('staleLabel')
     chartRef.current.update('none')
   }, [t])
+
+  React.useEffect(() => {
+    if (!chartRef.current) return
+    chartRef.current.data.datasets[1].hidden = !showEma
+    chartRef.current.update('none')
+  }, [showEma])
+
+  React.useEffect(() => {
+    if (!chartRef.current) return
+    chartRef.current.update('none')
+  }, [showTrendColors])
 
   React.useEffect(() => {
     const canvas = canvasRef.current
@@ -539,6 +593,14 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       <div className="cardTop">
         <div className="cardTitle">{t('historyChartTitle')}</div>
         <div className="inlineRight chartControls">
+          <button type="button" className={`chip ${showEma ? 'chipOn' : ''}`} onClick={() => setShowEma((v) => !v)}>
+            <span className="chipGlow" />
+            {t('emaShort')}
+          </button>
+          <button type="button" className={`chip ${showTrendColors ? 'chipOn' : ''}`} onClick={() => setShowTrendColors((v) => !v)}>
+            <span className="chipGlow" />
+            {t('trendColors')}
+          </button>
           {!isFollowingLive && (
             <button type="button" className="chip chipLive" onClick={handleBackToLive}>
               <span className="chipGlow" />
@@ -608,6 +670,18 @@ function buildStaleOverlay(points: { x: number; y: number }[], minimumMs = 5 * 6
   }
 
   return overlay
+}
+
+function buildEma(points: { x: number; y: number }[], period: number) {
+  if (!points.length || period < 2) return []
+  const multiplier = 2 / (period + 1)
+  const ema: { x: number; y: number }[] = []
+  let prev = points[0].y
+  for (const point of points) {
+    prev = (point.y - prev) * multiplier + prev
+    ema.push({ x: point.x, y: prev })
+  }
+  return ema
 }
 
 function applyDefaultZoom(chart: Chart | null) {
