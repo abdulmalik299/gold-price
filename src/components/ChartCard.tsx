@@ -38,6 +38,8 @@ type ViewStats = {
   volatilityPct: number
 }
 
+type ChartPoint = { x: number; y: number }
+
 const TIME_FORMATTERS = new Map<string, ReturnType<typeof buildTimeFormatters>>()
 
 function buildTimeFormatters(locale?: string) {
@@ -168,6 +170,20 @@ function buildGradient(ctx: CanvasRenderingContext2D, chart: Chart) {
   return g
 }
 
+function collapseUnchangedPoints(points: ChartPoint[]) {
+  if (points.length < 3) return points
+  const compact: ChartPoint[] = [points[0]]
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1]
+    const curr = points[i]
+    const next = points[i + 1]
+    const flatRun = prev.y === curr.y && curr.y === next.y
+    if (!flatRun) compact.push(curr)
+  }
+  compact.push(points[points.length - 1])
+  return compact
+}
+
 export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | null }) {
   const { t, lang } = useI18n()
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
@@ -263,10 +279,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
       worker.postMessage({ ticks: ticks.map((t) => ({ ts: t.ts, price: t.price })), requestId })
     })
 
-    const data = prepared.prepared
+    const raw = prepared.prepared
+    const data = collapseUnchangedPoints(raw)
     const emaData = buildEma(data, 20)
     const smaData = buildSma(data, 50)
-    const staleOverlayData = buildStaleOverlay(data)
     const last = data.length ? data[data.length - 1] : null
     setLastPoint(last ? { ts: last.x, price: last.y } : null)
     latestPointRef.current = last ? { ts: last.x, price: last.y } : null
@@ -277,6 +293,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        transitions: {
+          active: { animation: { duration: 180 } },
+          resize: { animation: { duration: 0 } },
+        },
         events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'touchend', 'mousedown', 'mouseup', 'wheel'],
         interaction: { mode: 'nearest', intersect: false, axis: 'x' },
         plugins: {
@@ -291,6 +311,11 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             backgroundColor: 'rgba(10, 12, 18, 0.92)',
             borderColor: 'rgba(247, 215, 122, 0.22)',
             borderWidth: 1,
+            displayColors: true,
+            usePointStyle: true,
+            caretPadding: 10,
+            caretSize: 7,
+            cornerRadius: 12,
             titleColor: 'rgba(255,255,255,0.92)',
             bodyColor: 'rgba(255,255,255,0.82)',
             callbacks: {
@@ -371,6 +396,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
                 return formatTimeTick(value, span ?? undefined, langRef.current)
               },
             },
+            border: { color: 'rgba(255,255,255,0.14)' },
           },
           y: {
             type: 'linear',
@@ -380,6 +406,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               color: 'rgba(255,255,255,0.55)',
               padding: 10,
             },
+            border: { color: 'rgba(255,255,255,0.14)' },
           },
         },
       }
@@ -395,7 +422,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               borderWidth: 2,
               pointRadius: 0,
               pointHitRadius: 24,
-              tension: 0.26,
+              cubicInterpolationMode: 'monotone',
+              tension: 0.32,
               borderColor: 'rgba(247, 215, 122, 0.95)',
               segment: {
                 borderColor: (ctx) => {
@@ -406,6 +434,10 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               },
               fill: true,
               backgroundColor: (c) => buildGradient(c.chart.ctx, c.chart),
+              pointHoverRadius: 4,
+              pointHoverBorderWidth: 2,
+              pointHoverBackgroundColor: 'rgba(255, 243, 196, 0.95)',
+              pointHoverBorderColor: 'rgba(10,12,18,0.92)',
             },
             {
               label: 'EMA (20)',
@@ -432,18 +464,6 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               fill: false,
               hidden: !showSma,
             },
-            {
-              label: t('staleLabel'),
-              data: staleOverlayData,
-              parsing: false,
-              borderWidth: 6,
-              pointRadius: 0,
-              pointHitRadius: 0,
-              tension: 0,
-              spanGaps: false,
-              borderColor: 'rgba(255, 56, 56, 0.25)',
-              fill: false,
-            },
           ],
         },
         options,
@@ -469,7 +489,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     ch.data.datasets[1].hidden = !showEma
     ch.data.datasets[2].data = smaData as any
     ch.data.datasets[2].hidden = !showSma
-    ch.data.datasets[3].data = staleOverlayData as any
+    
     
     if (prevMin != null && prevMax != null && prevSpan != null && prevDataMax != null && data.length) {
       const newDataMax = data[data.length - 1].x
@@ -554,7 +574,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     chartRef.current.data.datasets[0].label = t('goldLabel')
     chartRef.current.data.datasets[1].label = t('emaLabel')
     chartRef.current.data.datasets[2].label = 'SMA (50)'
-    chartRef.current.data.datasets[3].label = t('staleLabel')
+    
     chartRef.current.update('none')
   }, [t])
 
@@ -813,29 +833,6 @@ function calculateViewStats(points: { x: number; y: number }[]): ViewStats {
   const variance = prices.reduce((sum, price) => sum + (price - mean) ** 2, 0) / prices.length
   const volatilityPct = mean !== 0 ? (Math.sqrt(variance) / mean) * 100 : 0
   return { high, low, change, changePct, volatilityPct }
-}
-
-function buildStaleOverlay(points: { x: number; y: number }[], minimumMs = 5 * 60_000) {
-  if (points.length < 2) return []
-
-  const overlay = Array.from({ length: points.length }, () => ({ x: NaN, y: NaN }))
-  let runStart = 0
-
-  for (let i = 1; i <= points.length; i++) {
-    const sameAsStart = i < points.length && points[i].y === points[runStart].y
-    if (sameAsStart) continue
-
-    const end = i - 1
-    const runDuration = points[end].x - points[runStart].x
-    if (runDuration >= minimumMs) {
-      for (let p = runStart; p <= end; p++) {
-        overlay[p] = points[p]
-      }
-    }
-    runStart = i
-  }
-
-  return overlay
 }
 
 function buildEma(points: { x: number; y: number }[], period: number) {

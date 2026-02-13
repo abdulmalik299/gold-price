@@ -169,6 +169,11 @@ export default function App() {
   return (
     <I18nContext.Provider value={{ lang: language, dir, t, setLanguage }}>
       <div className={`app ${dir === 'rtl' ? 'rtl' : ''} ${showUsageNotice || showInfoNotice ? 'modalOpen' : ''}`}>
+        <div className="mandalaLayer" aria-hidden="true">
+          <span className="mandala mandalaA" />
+          <span className="mandala mandalaB" />
+          <span className="mandala mandalaC" />
+        </div>
         <div className="appContent" aria-hidden={showUsageNotice || showInfoNotice}>
           <HeaderBar
             lastPriceUpdateAt={live.lastPriceUpdateAt}

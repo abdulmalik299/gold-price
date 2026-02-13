@@ -14,22 +14,18 @@ function toMs(ts: string) {
 }
 
 function bucketBy(ticks: Tick[], keyFn: (ms: number) => number): Prepared {
-  const map = new Map<number, { sum: number; count: number; lastY: number }>()
+  const map = new Map<number, { lastY: number }>()
   for (const t of ticks) {
     const ms = toMs(t.ts)
     const k = keyFn(ms)
-    const prev = map.get(k)
-    if (!prev) map.set(k, { sum: t.price, count: 1, lastY: t.price })
-    else map.set(k, { sum: prev.sum + t.price, count: prev.count + 1, lastY: t.price })
+    map.set(k, { lastY: t.price })
   }
   const out: Prepared = []
   const keys = Array.from(map.keys()).sort((a, b) => a - b)
   for (const k of keys) {
     const v = map.get(k)!
-    // Use average, but preserve last to reduce lag feel.
-    const avg = v.sum / v.count
-    const y = (avg * 0.7) + (v.lastY * 0.3)
-    out.push({ x: k, y })
+    // Use the latest value in each bucket to avoid synthetic trend lines.
+    out.push({ x: k, y: v.lastY })
   }
   return out
 }
@@ -86,7 +82,9 @@ self.onmessage = (e: MessageEvent<{ ticks: Tick[] }>) => {
     }
     deduped.push(point)
   }
-  prepared = deduped
+
+  // Remove sequential duplicates where the price did not update.
+  prepared = deduped.filter((point, i, arr) => i === 0 || point.y !== arr[i - 1].y || i === arr.length - 1)
 
   const spanMs = prepared.length ? prepared[prepared.length - 1].x - prepared[0].x : 0
 
