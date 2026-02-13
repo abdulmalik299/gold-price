@@ -181,7 +181,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const [err, setErr] = React.useState<string | null>(null)
   const [isFollowingLive, setIsFollowingLive] = React.useState(true)
   const [showEma, setShowEma] = React.useState(true)
+  const [showSma, setShowSma] = React.useState(false)
   const [showTrendColors, setShowTrendColors] = React.useState(true)
+  const [priceScale, setPriceScale] = React.useState<'linear' | 'logarithmic'>('linear')
   const [rangePreset, setRangePreset] = React.useState<RangePreset>('ALL')
   const [viewStats, setViewStats] = React.useState<ViewStats | null>(null)
   const userInteractedRef = React.useRef(false)
@@ -190,6 +192,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
   const latestPointRef = React.useRef<{ ts: number; price: number } | null>(null)
   const longPressTimerRef = React.useRef<number | null>(null)
   const lastTapRef = React.useRef<number>(0)
+  const workerRequestIdRef = React.useRef(0)
 
   React.useEffect(() => {
     const id = window.setInterval(() => setChartNow(new Date()), 1000)
@@ -248,17 +251,21 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     }
     const worker = workerRef.current
 
-    const prepared = await new Promise<{ prepared: { x: number; y: number }[] }>((resolve) => {
-      const onMsg = (ev: MessageEvent) => {
+    workerRequestIdRef.current += 1
+    const requestId = workerRequestIdRef.current
+    const prepared = await new Promise<{ prepared: { x: number; y: number }[]; requestId?: number }>((resolve) => {
+      const onMsg = (ev: MessageEvent<{ prepared: { x: number; y: number }[]; requestId?: number }>) => {
+        if (ev.data?.requestId !== requestId) return
         worker.removeEventListener('message', onMsg as any)
         resolve(ev.data)
       }
       worker.addEventListener('message', onMsg as any)
-      worker.postMessage({ ticks: ticks.map((t) => ({ ts: t.ts, price: t.price })) })
+      worker.postMessage({ ticks: ticks.map((t) => ({ ts: t.ts, price: t.price })), requestId })
     })
 
     const data = prepared.prepared
     const emaData = buildEma(data, 20)
+    const smaData = buildSma(data, 50)
     const staleOverlayData = buildStaleOverlay(data)
     const last = data.length ? data[data.length - 1] : null
     setLastPoint(last ? { ts: last.x, price: last.y } : null)
@@ -313,7 +320,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
           zoom: {
             pan: {
               enabled: true,
-              mode: 'xy',
+              mode: 'x',
               onPan: () => {
                 userInteractedRef.current = true
                 setFollowLive(false)
@@ -366,6 +373,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             },
           },
           y: {
+            type: 'linear',
             grid: { color: 'rgba(255,255,255,0.06)' },
             position: 'right',
             ticks: {
@@ -412,6 +420,19 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
               hidden: !showEma,
             },
             {
+              label: 'SMA (50)',
+              data: smaData,
+              parsing: false,
+              borderWidth: 1.6,
+              pointRadius: 0,
+              pointHitRadius: 0,
+              tension: 0.18,
+              borderColor: 'rgba(202, 137, 255, 0.8)',
+              borderDash: [6, 5],
+              fill: false,
+              hidden: !showSma,
+            },
+            {
               label: t('staleLabel'),
               data: staleOverlayData,
               parsing: false,
@@ -446,7 +467,9 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     ch.data.datasets[0].data = data as any
     ch.data.datasets[1].data = emaData as any
     ch.data.datasets[1].hidden = !showEma
-    ch.data.datasets[2].data = staleOverlayData as any
+    ch.data.datasets[2].data = smaData as any
+    ch.data.datasets[2].hidden = !showSma
+    ch.data.datasets[3].data = staleOverlayData as any
     
     if (prevMin != null && prevMax != null && prevSpan != null && prevDataMax != null && data.length) {
       const newDataMax = data[data.length - 1].x
@@ -469,7 +492,7 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     }
     ch.update()
     updateStatsFromRange(ch)
-  }, [lang, setFollowLive, showEma, showTrendColors, t, updateFollowState, updateStatsFromRange])
+  }, [lang, setFollowLive, showEma, showSma, showTrendColors, t, updateFollowState, updateStatsFromRange])
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -530,7 +553,8 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
     if (!chartRef.current) return
     chartRef.current.data.datasets[0].label = t('goldLabel')
     chartRef.current.data.datasets[1].label = t('emaLabel')
-    chartRef.current.data.datasets[2].label = t('staleLabel')
+    chartRef.current.data.datasets[2].label = 'SMA (50)'
+    chartRef.current.data.datasets[3].label = t('staleLabel')
     chartRef.current.update('none')
   }, [t])
 
@@ -542,8 +566,23 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
 
   React.useEffect(() => {
     if (!chartRef.current) return
+    chartRef.current.data.datasets[2].hidden = !showSma
+    chartRef.current.update('none')
+  }, [showSma])
+
+  React.useEffect(() => {
+    if (!chartRef.current) return
     chartRef.current.update('none')
   }, [showTrendColors])
+
+  React.useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+    const yScale = chart.options.scales?.y
+    if (!yScale || Array.isArray(yScale)) return
+    yScale.type = priceScale
+    chart.update()
+  }, [priceScale])
 
   React.useEffect(() => {
     const canvas = canvasRef.current
@@ -684,6 +723,14 @@ export default function ChartCard({ liveOunceUsd }: { liveOunceUsd: number | nul
             <span className="chipGlow" />
             {t('trendColors')}
           </button>
+          <button type="button" className={`chip ${showSma ? 'chipOn' : ''}`} onClick={() => setShowSma((v) => !v)}>
+            <span className="chipGlow" />
+            {t('smaShort')}
+          </button>
+          <button type="button" className="chip" onClick={() => setPriceScale((v) => (v === 'linear' ? 'logarithmic' : 'linear'))}>
+            <span className="chipGlow" />
+            {t('priceScale')}: {priceScale === 'linear' ? t('scaleLinear') : t('scaleLog')}
+          </button>
           {!isFollowingLive && (
             <button type="button" className="chip chipLive" onClick={handleBackToLive}>
               <span className="chipGlow" />
@@ -779,9 +826,8 @@ function buildStaleOverlay(points: { x: number; y: number }[], minimumMs = 5 * 6
     if (sameAsStart) continue
 
     const end = i - 1
-    const isChangedAfterRun = i < points.length && points[i].y !== points[runStart].y
     const runDuration = points[end].x - points[runStart].x
-    if (runDuration >= minimumMs && isChangedAfterRun) {
+    if (runDuration >= minimumMs) {
       for (let p = runStart; p <= end; p++) {
         overlay[p] = points[p]
       }
@@ -802,6 +848,24 @@ function buildEma(points: { x: number; y: number }[], period: number) {
     ema.push({ x: point.x, y: prev })
   }
   return ema
+}
+
+
+function buildSma(points: { x: number; y: number }[], period: number) {
+  if (!points.length || period < 2) return []
+  const sma: { x: number; y: number }[] = []
+  let rollingSum = 0
+
+  for (let i = 0; i < points.length; i++) {
+    rollingSum += points[i].y
+    if (i >= period) {
+      rollingSum -= points[i - period].y
+    }
+    const window = Math.min(i + 1, period)
+    sma.push({ x: points[i].x, y: rollingSum / window })
+  }
+
+  return sma
 }
 
 function applyDefaultZoom(chart: Chart | null) {
