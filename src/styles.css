@@ -950,3 +950,115 @@ b{ color: rgba(255,255,255,0.92); }
   .calcPreview{ font-size: 22px; }
   .headerRight{ justify-content:space-between; }
 }
+
+/* 2026 premium redesign layer */
+.heroFrame{
+  border: 1px solid rgba(247,215,122,0.25);
+  border-radius: 24px;
+  padding: 14px;
+  background:
+    linear-gradient(130deg, rgba(247,215,122,0.10), rgba(255,255,255,0.03) 40%),
+    rgba(4,8,18,0.62);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(14px);
+}
+
+.mandalaD{
+  width: 540px;
+  height: 540px;
+  left: 62%;
+  top: -180px;
+  opacity: 0.24;
+  animation-duration: 26s;
+  background:
+    conic-gradient(from 0deg, rgba(247,215,122,0.12), transparent 35%, rgba(247,215,122,0.08), transparent 70%, rgba(247,215,122,0.12)),
+    repeating-radial-gradient(circle, rgba(247,215,122,0.14) 0 2px, transparent 2px 16px);
+}
+
+.mandalaE{
+  width: 460px;
+  height: 460px;
+  right: -120px;
+  bottom: -120px;
+  opacity: 0.2;
+  animation-duration: 30s;
+  background:
+    radial-gradient(circle at center, rgba(247,215,122,0.15), transparent 40%),
+    repeating-conic-gradient(from 0deg, rgba(247,215,122,0.18) 0 4deg, transparent 4deg 12deg);
+}
+
+.luxuryHub{
+  margin-top: 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(247,215,122,0.22);
+  background: linear-gradient(140deg, rgba(247,215,122,0.12), rgba(255,255,255,0.04) 30%, rgba(0,0,0,0.18));
+}
+
+.luxuryHubHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.eyebrow{
+  margin:0;
+  color: var(--gold2);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.luxuryHub h2{ margin: 4px 0 0; font-size: 20px; }
+
+.marketModeBadge{
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.38);
+  border: 1px solid rgba(247,215,122,0.26);
+  font-size: 12px;
+  color: var(--gold2);
+  white-space: nowrap;
+}
+
+.signalBand{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.signalBand > div{
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(7, 11, 22, 0.62);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.signalBand strong{ font-size: 18px; display:block; margin-top: 4px; }
+
+.strategicGrid{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.strategicTile{
+  margin:0;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.strategicTile h3{ margin:0 0 6px; font-size: 14px; color: var(--gold2); }
+.strategicTile p{ margin:0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 900px){
+  .signalBand,
+  .strategicGrid{
+    grid-template-columns: 1fr;
+  }
+  .luxuryHubHeader{ flex-direction: column; }
+}
