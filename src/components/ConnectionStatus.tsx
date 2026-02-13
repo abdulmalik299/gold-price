@@ -23,10 +23,15 @@ function formatDownloadSpeed(kbPerSecond: number | null) {
 export default function ConnectionStatus() {
   const { t } = useI18n()
   const [s, setS] = React.useState<NetStatus>({ online: navigator.onLine, rttMs: null, downKBps: null, at: Date.now() })
+  const [samples, setSamples] = React.useState<number[]>([])
 
   const refresh = React.useCallback(async () => {
     const next = await sampleNetwork()
     setS(next)
+    setSamples((prev) => {
+      const n = [...prev, next.rttMs ?? 0].slice(-12)
+      return n
+    })
   }, [])
 
   React.useEffect(() => {
@@ -45,6 +50,18 @@ export default function ConnectionStatus() {
   const tone = s.online ? 'online' : 'offline'
   const ms = s.rttMs == null ? '—' : `${Math.round(s.rttMs)} ms`
   const downloadSpeed = formatDownloadSpeed(s.downKBps)
+  const jitter =
+    samples.length > 1
+      ? Math.round(Math.max(...samples) - Math.min(...samples))
+      : null
+  const confidence =
+    s.downKBps == null
+      ? t('qualityUnknown')
+      : s.downKBps >= 5000 && (s.rttMs ?? 400) < 160
+        ? t('connectionExcellent')
+        : s.downKBps >= 1500
+          ? t('connectionStable')
+          : t('connectionLimited')
 
   return (
     <div className="card conn">
@@ -69,12 +86,21 @@ export default function ConnectionStatus() {
           <div className="k">{t('quality')}</div>
           <div className="v">{labelForKBps(s.downKBps, t)}</div>
         </div>
+        <div className="kv">
+          <div className="k">{t('jitter')}</div>
+          <div className="v">{jitter == null ? '—' : `${jitter} ms`}</div>
+        </div>
+        <div className="kv connWide">
+          <div className="k">{t('connectionConfidence')}</div>
+          <div className="v">{confidence}</div>
+        </div>
         <button className="btn" type="button" onClick={refresh}>
           <span className="btnGlow" />
           {t('recheck')}
         </button>
       </div>
 
+      <div className="mutedTiny">{t('connectionLastCheck')}: {new Date(s.at).toLocaleTimeString()}</div>
       <div className="mutedTiny">{t('connectionNote')}</div>
     </div>
   )

@@ -114,6 +114,10 @@ export default function LiveOunceCard({
   const { delta, pct } = deltaAndPercent(now, lastDayBase)
   const { arrow, tone } = arrowForDelta(delta)
   const cls = tone === 'up' ? 'chgUp' : tone === 'down' ? 'chgDown' : 'chgFlat'
+  const weekBase = perfBase['7d']
+  const monthBase = perfBase['30d']
+  const weekMomentum = weekBase == null ? null : now - weekBase
+  const monthMomentum = monthBase == null ? null : now - monthBase
 
   // Animate only when this card mounts (and App.tsx remounts it only on real changes)
   const [pulse, setPulse] = React.useState(true)
@@ -137,6 +141,15 @@ export default function LiveOunceCard({
         <span className="changeAmt">{formatMoney(delta, 'USD')}</span>
         <span className="dotSep">•</span>
         <span className="changePct">{formatPercent(pct)}</span>
+      </div>
+
+      <div className="liveSignalRow">
+        <div className="signalDot" aria-hidden="true" />
+        <span>{t('liveSignalActive')}</span>
+        <span className="dotSep">•</span>
+        <span>{t('momentum7d')}: {weekMomentum == null ? '—' : formatMoney(weekMomentum, 'USD', 2)}</span>
+        <span className="dotSep">•</span>
+        <span>{t('momentum30d')}: {monthMomentum == null ? '—' : formatMoney(monthMomentum, 'USD', 2)}</span>
       </div>
 
       <div className="perfMini">
